@@ -6,6 +6,7 @@ import {
   Settings,
   PlusCircle,
   Bot,
+  FileText,
 } from "lucide-react";
 
 const menus = [
@@ -38,6 +39,11 @@ const menus = [
   name: "AI Chat",
   icon: <Bot size={18} />,
   path: "/ai-chat",
+},
+{
+  name: "Documents",
+  icon: <FileText size={18} />,
+  path: "/documents",
 },
 ];
 
