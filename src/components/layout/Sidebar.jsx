@@ -7,6 +7,7 @@ import {
   PlusCircle,
   Bot,
   FileText,
+  Briefcase,
 } from "lucide-react";
 
 const menus = [
@@ -44,6 +45,11 @@ const menus = [
   name: "Documents",
   icon: <FileText size={18} />,
   path: "/documents",
+},
+{
+  name: "Workspace",
+  icon: <Briefcase size={18} />,
+  path: "/workspace",
 },
 ];
 

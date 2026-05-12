@@ -32,6 +32,26 @@ await dbInstance.execute(`
     created_at TEXT
   )
 `);
+await dbInstance.execute(`
+  CREATE TABLE IF NOT EXISTS workspace_documents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER,
+    title TEXT,
+    type TEXT,
+    content TEXT,
+    created_at TEXT
+  )
+`);
+
+await dbInstance.execute(`
+  CREATE TABLE IF NOT EXISTS project_timelines (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER,
+    phase TEXT,
+    status TEXT,
+    due_date TEXT
+  )
+`);
 
     console.log("Projects table ready");
 

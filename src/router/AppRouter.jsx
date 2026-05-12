@@ -1,7 +1,7 @@
 import Documents from "../pages/Documents";
 import AIChat from "../pages/AIChat";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import Workspace from "../pages/Workspace";
 import Dashboard from "../pages/Dashboard";
 import Projects from "../pages/Projects";
 import Discovery from "../pages/Discovery";
@@ -22,6 +22,7 @@ export default function AppRouter() {
           <Route path="/create-project" element={<CreateProject />} />
           <Route path="/ai-chat" element={<AIChat />} />
           <Route path="/documents" element={<Documents />} />
+          <Route path="/workspace" element={<Workspace />} />
         </Routes>
       </MainLayout>
     </BrowserRouter>
