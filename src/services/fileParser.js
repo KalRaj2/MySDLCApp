@@ -1,38 +1,62 @@
-export function parseGeneratedFiles(
-  content
-) {
+export function parseGeneratedFiles(text) {
 
-  const files = [];
+  try {
 
-  /*
-    SUPPORTS:
+    if (!text) return [];
 
-    FILE: path
-    ### FILE: path
-    ### path
+    const files = [];
 
-  */
+    /*
+      MATCHES:
 
-  const regex =
-    /(?:###\s*)?(?:FILE:\s*)?([^\n]+\.(jsx|js|tsx|ts|css|html|json))\s*\n```[\w]*\n([\s\S]*?)```/g;
+      FILE: src/App.jsx
+      ```jsx
+      code
+      ```
 
-  let match;
+    */
 
-  while (
-    (match = regex.exec(content))
-      !== null
-  ) {
+    const regex =
+      /FILE:\s*(.*?)\n```(?:\w+)?\n([\s\S]*?)```/g;
 
-    files.push({
+    let match;
 
-      fileName:
-        match[1].trim(),
+    while (
+      (match = regex.exec(text)) !== null
+    ) {
 
-      code:
-        match[3].trim(),
+      const fileName =
+        match[1]?.trim();
 
-    });
+      const code =
+        match[2]?.trim();
+
+      if (fileName && code) {
+
+        files.push({
+
+          fileName,
+
+          code,
+
+        });
+      }
+    }
+
+    console.log(
+      "PARSED FILES:",
+      files
+    );
+
+    return files;
+
+  } catch (error) {
+
+    console.error(
+      "FILE PARSER ERROR:",
+      error
+    );
+
+    return [];
   }
-
-  return files;
 }
