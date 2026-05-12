@@ -26,20 +26,31 @@ import {
   exportText,
 } from "../services/exportService";
 
+import {
+  parseGeneratedFiles,
+} from "../services/fileParser";
+
+import {
+  saveGeneratedFile,
+  getGeneratedFiles,
+} from "../services/generatedFileService";
+
 export default function CodeGenerator() {
 
-  const [projects,
-    setProjects] =
-    useState([]);
+  const [
+    projects,
+    setProjects,
+  ] = useState([]);
 
   const [
     selectedProject,
     setSelectedProject,
   ] = useState("");
 
-  const [prompt,
-    setPrompt] =
-    useState("");
+  const [
+    prompt,
+    setPrompt,
+  ] = useState("");
 
   const [
     selectedTemplate,
@@ -48,37 +59,72 @@ export default function CodeGenerator() {
     codeTemplates[0]
   );
 
-  const [framework,
-    setFramework] =
-    useState("React");
+  const [
+    framework,
+    setFramework,
+  ] = useState("React");
 
-  const [language,
-    setLanguage] =
-    useState("JavaScript");
+  const [
+    language,
+    setLanguage,
+  ] = useState("JavaScript");
 
-  const [result,
-    setResult] =
-    useState("");
+  const [
+    result,
+    setResult,
+  ] = useState("");
 
-  const [loading,
-    setLoading] =
-    useState(false);
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
+
+  const [
+    generatedFiles,
+    setGeneratedFiles,
+  ] = useState([]);
+
+  const [
+    selectedFile,
+    setSelectedFile,
+  ] = useState(null);
 
   useEffect(() => {
+
     loadProjects();
+
   }, []);
 
   const loadProjects =
     async () => {
 
-      const data =
-        await getProjects();
+      try {
 
-      setProjects(data);
+        const data =
+          await getProjects();
 
-      if (data.length > 0) {
-        setSelectedProject(
-          data[0].id
+        setProjects(data);
+
+        if (data.length > 0) {
+
+          setSelectedProject(
+            data[0].id
+          );
+
+          const files =
+            await getGeneratedFiles(
+              data[0].id
+            );
+
+          setGeneratedFiles(files);
+        }
+
+      } catch (error) {
+
+        console.error(error);
+
+        toast.error(
+          "Failed to load projects"
         );
       }
     };
@@ -101,51 +147,59 @@ export default function CodeGenerator() {
 
         setResult("");
 
+        setSelectedFile(null);
+
         let generatedText = "";
 
         const aiPrompt = `
-You are a world-class senior software architect and staff engineer.
+SYSTEM:
+You are a senior software engineer.
 
 STRICT RULES:
 
-- Generate REAL production-ready source code
-- DO NOT explain concepts
-- DO NOT write tutorials
-- DO NOT give numbered steps
-- DO NOT describe what you will do
-- DO NOT repeat the prompt
-- ONLY generate code and file structure
-- Generate clean scalable architecture
-- Use best practices
-- Use proper folder structure
-- Use reusable components
-- Include comments inside code only when necessary
+- Output ONLY source code
+- NO explanations
+- NO tutorials
+- NO numbered lists
+- Use standard Tailwind className
+- DO NOT use tw=""
+- DO NOT import tailwindcss directly
+- Generate complete implementation
+- Generate separate files
+- Use production-ready architecture
+- Use reusable code
 
-OUTPUT FORMAT:
+MANDATORY FORMAT:
 
-1. Folder Structure
-2. File Name
-3. Source Code
+FILE: src/components/Login.jsx
+\`\`\`javascript
+CODE
+\`\`\`
 
-Framework:
-${framework}
+FILE: src/services/authService.js
+\`\`\`javascript
+CODE
+\`\`\`
 
-Programming Language:
-${language}
-
-Template:
-${selectedTemplate.title}
-
-USER REQUIREMENT:
+USER REQUEST:
 ${prompt}
 
-${selectedTemplate.prompt}
+TECH STACK:
+${framework}
 
-Generate COMPLETE IMPLEMENTATION NOW.
+LANGUAGE:
+${language}
+
+TEMPLATE:
+${selectedTemplate.title}
+
+Generate implementation now.
 `;
 
         await streamOllama(
+
           aiPrompt,
+
           (chunk) => {
 
             generatedText = chunk;
@@ -155,22 +209,61 @@ Generate COMPLETE IMPLEMENTATION NOW.
           }
         );
 
-        await saveWorkspaceDocument({
-          project_id:
-            selectedProject,
+        const parsedFiles =
+          parseGeneratedFiles(
+            generatedText
+          );
 
-          title:
-            selectedTemplate.title,
+        if (
+          parsedFiles.length > 0
+        ) {
 
-          type:
-            "generated_code",
+          for (const file of parsedFiles) {
 
-          content:
-            generatedText,
-        });
+            await saveGeneratedFile({
+
+              project_id:
+                selectedProject,
+
+              file_name:
+                file.fileName,
+
+              content:
+                file.code,
+            });
+          }
+
+          const files =
+            await getGeneratedFiles(
+              selectedProject
+            );
+
+          setGeneratedFiles(files);
+
+          setSelectedFile(
+            files[0]
+          );
+
+        } else {
+
+          await saveWorkspaceDocument({
+
+            project_id:
+              selectedProject,
+
+            title:
+              selectedTemplate.title,
+
+            type:
+              "generated_code",
+
+            content:
+              generatedText,
+          });
+        }
 
         toast.success(
-          "Code generated"
+          "Code generated successfully"
         );
 
       } catch (error) {
@@ -184,7 +277,6 @@ Generate COMPLETE IMPLEMENTATION NOW.
       } finally {
 
         setLoading(false);
-
       }
     };
 
@@ -224,11 +316,29 @@ Generate COMPLETE IMPLEMENTATION NOW.
 
           <select
             value={selectedProject}
-            onChange={(e) =>
+            onChange={async (e) => {
+
+              const projectId =
+                e.target.value;
+
               setSelectedProject(
-                e.target.value
-              )
-            }
+                projectId
+              );
+
+              const files =
+                await getGeneratedFiles(
+                  projectId
+                );
+
+              setGeneratedFiles(
+                files
+              );
+
+              setSelectedFile(
+                null
+              );
+
+            }}
             className="p-3 rounded-xl bg-slate-700 outline-none"
           >
 
@@ -248,7 +358,7 @@ Generate COMPLETE IMPLEMENTATION NOW.
           {/* USER PROMPT */}
 
           <textarea
-            rows="7"
+            rows="8"
             placeholder="Describe the code to generate..."
             value={prompt}
             onChange={(e) =>
@@ -359,11 +469,12 @@ Generate COMPLETE IMPLEMENTATION NOW.
 
           </select>
 
-          {/* GENERATE */}
+          {/* GENERATE BUTTON */}
 
           <button
             onClick={generateCode}
-            className="bg-green-600 p-4 rounded-xl"
+            disabled={loading}
+            className="bg-green-600 hover:bg-green-700 transition-all p-4 rounded-xl font-semibold"
           >
 
             {loading
@@ -372,13 +483,15 @@ Generate COMPLETE IMPLEMENTATION NOW.
 
           </button>
 
-          {/* EXPORT */}
+          {/* EXPORT BUTTON */}
 
           <button
             onClick={exportCode}
-            className="bg-blue-600 p-4 rounded-xl"
+            className="bg-blue-600 hover:bg-blue-700 transition-all p-4 rounded-xl font-semibold"
           >
-            Export Code
+
+            Export Full Response
+
           </button>
 
         </div>
@@ -387,12 +500,116 @@ Generate COMPLETE IMPLEMENTATION NOW.
 
       {/* RIGHT PANEL */}
 
-      <div className="bg-slate-900 rounded-xl p-6 overflow-auto whitespace-pre-wrap">
+      <div className="grid grid-cols-3 gap-4 h-full">
 
-        {loading
-          ? "AI generating code..."
-          : result ||
-            "Generated code appears here"}
+        {/* FILE LIST */}
+
+        <div className="bg-slate-950 rounded-xl p-4 overflow-auto">
+
+          <h2 className="font-bold mb-4 text-lg">
+            Generated Files
+          </h2>
+
+          <div className="flex flex-col gap-2">
+
+            {generatedFiles.length === 0 && (
+
+              <div className="text-gray-400 text-sm">
+                No generated files
+              </div>
+
+            )}
+
+            <div className="mt-4">
+
+  <h2 className="text-lg font-bold mb-3">
+    Generated Files
+  </h2>
+
+  <div className="space-y-2">
+
+    {generatedFiles.map((file, index) => (
+
+      <div
+        key={index}
+        className="
+          bg-gray-800
+          text-green-400
+          px-3
+          py-2
+          rounded
+          cursor-pointer
+          hover:bg-gray-700
+          transition
+        "
+        onClick={() =>
+          setSelectedFile(file)
+        }
+      >
+        {file.fileName}
+      </div>
+
+    ))}
+
+  </div>
+
+</div>
+
+          </div>
+
+        </div>
+
+        {/* CODE VIEWER */}
+
+        <div className="col-span-2 bg-slate-900 rounded-xl p-6 overflow-auto">
+
+          {selectedFile ? (
+
+            <div>
+
+              <div className="flex justify-between items-center mb-4">
+
+                <h2 className="font-bold text-xl break-all">
+                  {selectedFile.file_name}
+                </h2>
+
+                <button
+                  onClick={() =>
+                    exportText(
+                      selectedFile.file_name,
+                      selectedFile.content
+                    )
+                  }
+                  className="bg-blue-600 hover:bg-blue-700 transition-all px-4 py-2 rounded-lg"
+                >
+
+                  Export File
+
+                </button>
+
+              </div>
+
+              <pre className="whitespace-pre-wrap text-sm">
+                {selectedFile.content}
+              </pre>
+
+            </div>
+
+          ) : (
+
+            <div className="text-gray-400">
+
+              {loading
+                ? "AI generating code..."
+                : result
+                  ? result
+                  : "Generated code appears here"}
+
+            </div>
+
+          )}
+
+        </div>
 
       </div>
 

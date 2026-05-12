@@ -11,10 +11,18 @@ export async function streamOllama(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "tinyllama",
-          prompt: prompt,
-          stream: true,
-        }),
+  model: "qwen2.5-coder:3b",
+
+  prompt,
+
+  stream: true,
+
+  options: {
+    temperature: 0.2,
+    top_p: 0.8,
+    num_predict: 2048,
+  },
+}),
       }
     );
 

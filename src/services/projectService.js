@@ -1,4 +1,7 @@
-import { initDB } from "../database/db";
+import {
+  initDB,
+  getDB,
+} from "./db";
 
 export async function createProject(projectName) {
   const db = await initDB();
@@ -12,15 +15,17 @@ export async function createProject(projectName) {
   );
 }
 
+
+
 export async function getProjects() {
-  const db = await initDB();
 
-  const projects = await db.select(`
-    SELECT * FROM projects
-    ORDER BY id DESC
-  `);
+  await initDB();
 
-  return projects;
+  const db = getDB();
+
+  return await db.select(
+    "SELECT * FROM projects ORDER BY id DESC"
+  );
 }
 
 export async function deleteProject(id) {

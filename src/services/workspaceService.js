@@ -1,71 +1,143 @@
-import { initDB } from "../database/db";
+import {
+  initDB,
+  getDB,
+} from "./db";
+
+/* SAVE DOCUMENT */
 
 export async function saveWorkspaceDocument(
-  data
+  document
 ) {
-  const db = await initDB();
+
+  await initDB();
+
+  const db = getDB();
 
   await db.execute(
+
     `
-      INSERT INTO workspace_documents (
-        project_id,
-        title,
-        type,
-        content,
-        created_at
-      )
-      VALUES (?, ?, ?, ?, ?)
+    INSERT INTO documents
+    (
+      project_id,
+      title,
+      type,
+      content
+    )
+
+    VALUES (?, ?, ?, ?)
     `,
+
     [
-      data.project_id,
-      data.title,
-      data.type,
-      data.content,
-      new Date().toISOString(),
+      document.project_id,
+      document.title,
+      document.type,
+      document.content,
     ]
   );
 }
 
+/* GET PROJECT DOCUMENTS */
+
 export async function getWorkspaceDocuments(
   projectId
 ) {
-  const db = await initDB();
 
-  return await db.select(
-    `
-      SELECT * FROM workspace_documents
+  await initDB();
+
+  const db = getDB();
+
+  const result =
+    await db.select(
+
+      `
+      SELECT *
+      FROM documents
+
       WHERE project_id = ?
+
       ORDER BY id DESC
-    `,
-    [projectId]
-  );
+      `,
+
+      [projectId]
+    );
+
+  return result;
 }
-export async function updateWorkspaceDocument(
-  id,
-  content
+
+/* DELETE DOCUMENT */
+
+export async function deleteWorkspaceDocument(
+  id
 ) {
-  const db = await initDB();
+
+  await initDB();
+
+  const db = getDB();
 
   await db.execute(
+
     `
-      UPDATE workspace_documents
-      SET content = ?
-      WHERE id = ?
+    DELETE FROM documents
+    WHERE id = ?
     `,
-    [content, id]
+
+    [id]
   );
 }
 
-export async function getDocumentById(id) {
-  const db = await initDB();
+/* UPDATE DOCUMENT */
 
-  const result = await db.select(
+export async function updateWorkspaceDocument(
+  document
+) {
+
+  await initDB();
+
+  const db = getDB();
+
+  await db.execute(
+
     `
-      SELECT * FROM workspace_documents
-      WHERE id = ?
+    UPDATE documents
+
+    SET
+      title = ?,
+      type = ?,
+      content = ?
+
+    WHERE id = ?
     `,
-    [id]
+
+    [
+      document.title,
+      document.type,
+      document.content,
+      document.id,
+    ]
   );
+}
+/* GET SINGLE DOCUMENT */
+
+export async function getDocumentById(
+  id
+) {
+
+  await initDB();
+
+  const db = getDB();
+
+  const result =
+    await db.select(
+
+      `
+      SELECT *
+      FROM documents
+
+      WHERE id = ?
+      `,
+
+      [id]
+    );
 
   return result[0];
 }

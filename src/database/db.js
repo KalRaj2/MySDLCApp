@@ -82,6 +82,21 @@ await dbInstance.execute(`
     created_at TEXT
   )
 `);
+await db.execute(`
+CREATE TABLE IF NOT EXISTS generated_files (
+
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+  project_id INTEGER,
+
+  file_name TEXT,
+
+  content TEXT,
+
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+
+)
+`);
     console.log("Projects table ready");
 
     return dbInstance;
