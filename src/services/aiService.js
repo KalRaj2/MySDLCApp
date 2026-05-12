@@ -1,5 +1,3 @@
-import axios from "axios";
-
 const OLLAMA_URL =
   "http://127.0.0.1:11434/api/generate";
 
@@ -10,7 +8,9 @@ const OLLAMA_URL =
 export async function generateAIResponse({
 
   prompt,
+
   model = "qwen2.5-coder:3b",
+
   onStream,
 
 }) {
@@ -19,193 +19,136 @@ export async function generateAIResponse({
 
     const finalPrompt = `
 
-    You are NOT a chatbot.
+You are NOT a chatbot.
 
 You are a code generation engine.
 
 Your response will be parsed automatically.
 
-If you generate explanations,
-the application will fail.
+ONLY generate FILE blocks.
 
-ONLY generate parsable FILE blocks.
+STRICT FORMAT:
 
-You are a senior software architect and expert full-stack engineer.
-
-Generate production-ready code.
-
-STRICT OUTPUT FORMAT:
-
-FILE: src/path/fileName.ext
-\`\`\`language
-CODE HERE
+FILE: src/fileName.js
+\`\`\`javascript
+CODE
 \`\`\`
 
-IMPORTANT RULES:
-
-- ONLY generate FILE blocks
-- NO explanations
-- NO introductions
-- NO markdown headings
-- NO bullet points
-- NO extra text
-- NO summaries
-- NO descriptions
-- NO notes
-- NO text outside FILE blocks
-
-REQUIREMENTS:
-
-REQUIREMENTS:
+RULES:
 
 - Generate ALL requested files
-- NEVER skip files
-- NEVER generate only one file
-- Generate one FILE block per file
-- Every requested filename MUST appear
-- Include complete working code
-- Use modern best practices
-- Use reusable architecture
-- Include imports and exports
-- Include validations
-- Include services
-- Include components
-- Use production-ready code
-
-VERY IMPORTANT:
-
-If the user requests:
-
-- Login.jsx
-- authService.js
-- validation.js
-
-You MUST generate ALL 3 files.
-
-FAILURE TO GENERATE ALL FILES IS INCORRECT.
+- No explanations
+- No markdown headings
+- No descriptions
+- No notes
+- No extra text
 
 USER REQUEST:
 
 ${prompt}
 
-VERY IMPORTANT:
-
-Return ALL requested files.
-
-Example format:
-
-FILE: src/components/Login.jsx
-\`\`\`jsx
-CODE
-\`\`\`
-
-FILE: src/services/authService.js
-\`\`\`javascript
-CODE
-\`\`\`
-
-FILE: src/utils/validation.js
-\`\`\`javascript
-CODE
-\`\`\`
-
-If you fail to generate ALL files,
-the response is incorrect.
 `;
 
     const response =
-      await axios.post(
+      await fetch(
 
         OLLAMA_URL,
 
         {
 
-          model: "qwen2.5-coder:3b",
-          prompt: finalPrompt,
-          stream: true,
-          options: {
-            num_predict: 4096,
-            temperature: 0.2,
+          method: "POST",
+
+          headers: {
+
+            "Content-Type":
+              "application/json",
+
+          },
+
+          body: JSON.stringify({
+
+            model,
+
+            prompt: finalPrompt,
+
+            stream: true,
+
+            options: {
+
+              temperature: 0.2,
+
+              num_predict: 4096,
+
             },
 
-        },
-
-        {
-
-          responseType: "stream",
+          }),
 
         }
       );
+
+    if (!response.body) {
+
+      throw new Error(
+        "No response body"
+      );
+    }
+
+    const reader =
+      response.body.getReader();
+
+    const decoder =
+      new TextDecoder();
 
     let fullResponse = "";
 
-    return new Promise((resolve, reject) => {
+    while (true) {
 
-      response.data.on(
+      const {
+        done,
+        value,
+      } = await reader.read();
 
-        "data",
+      if (done) break;
 
-        (chunk) => {
+      const chunk =
+        decoder.decode(value);
 
-          const lines =
-            chunk
-              .toString()
-              .split("\n")
-              .filter(Boolean);
+      const lines =
+        chunk
+          .split("\n")
+          .filter(Boolean);
 
-          for (const line of lines) {
+      for (const line of lines) {
 
-            try {
+        try {
 
-              const parsed =
-                JSON.parse(line);
+          const parsed =
+            JSON.parse(line);
 
-              if (parsed.response) {
+          if (parsed.response) {
 
-                fullResponse +=
-                  parsed.response;
+            fullResponse +=
+              parsed.response;
 
-                if (onStream) {
+            if (onStream) {
 
-                  onStream(
-                    fullResponse
-                  );
-                }
-              }
-
-              if (parsed.done) {
-
-                resolve(
-                  fullResponse
-                );
-              }
-
-            } catch (err) {
-
-              console.error(
-                "Stream Parse Error:",
-                err
+              onStream(
+                fullResponse
               );
             }
           }
-        }
-      );
 
-      response.data.on(
-
-        "error",
-
-        (err) => {
+        } catch (err) {
 
           console.error(
-            "Ollama Stream Error:",
+            "Parse Error:",
             err
           );
-
-          reject(err);
         }
-      );
-    });
+      }
+    }
+
+    return fullResponse;
 
   } catch (error) {
 
@@ -230,6 +173,7 @@ export async function askOllama(
   return await generateAIResponse({
 
     prompt,
+
     onStream,
 
   });
