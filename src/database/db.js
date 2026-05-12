@@ -68,7 +68,20 @@ await dbInstance.execute(`
     created_at TEXT
   )
 `);
-
+await dbInstance.execute(`
+  CREATE TABLE IF NOT EXISTS agile_tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER,
+    title TEXT,
+    description TEXT,
+    status TEXT,
+    priority TEXT,
+    story_points INTEGER,
+    assigned_to TEXT,
+    sprint TEXT,
+    created_at TEXT
+  )
+`);
     console.log("Projects table ready");
 
     return dbInstance;

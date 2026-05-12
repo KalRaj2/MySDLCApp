@@ -1,18 +1,23 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
+
   "identifier": "default",
-  "description": "Default app permissions",
+
+  "description": "Capability for the main window",
+
   "windows": ["main"],
+
   "permissions": [
-  "core:default",
 
-  "sql:default",
-  "sql:allow-load",
-  "sql:allow-execute",
-  "sql:allow-select",
+    "core:default",
 
-  "fs:default",
-  "fs:allow-write-text-file",
-  "fs:allow-read-text-file"
-]
+    "sql:default",
+    "sql:allow-load",
+    "sql:allow-execute",
+    "sql:allow-select",
+
+    "fs:default",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file"
+  ]
 }
