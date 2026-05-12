@@ -52,6 +52,22 @@ await dbInstance.execute(`
     due_date TEXT
   )
 `);
+await dbInstance.execute(`
+  CREATE TABLE IF NOT EXISTS requirement_matrix (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER,
+    requirement_id TEXT,
+    title TEXT,
+    description TEXT,
+    module_name TEXT,
+    priority TEXT,
+    status TEXT,
+    test_case TEXT,
+    risk_level TEXT,
+    sprint TEXT,
+    created_at TEXT
+  )
+`);
 
     console.log("Projects table ready");
 

@@ -8,6 +8,7 @@ import {
   Bot,
   FileText,
   Briefcase,
+  GitBranch,
 } from "lucide-react";
 
 const menus = [
@@ -50,6 +51,11 @@ const menus = [
   name: "Workspace",
   icon: <Briefcase size={18} />,
   path: "/workspace",
+},
+{
+  name: "RTM",
+  icon: <GitBranch size={18} />,
+  path: "/rtm",
 },
 ];
 

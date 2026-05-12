@@ -40,3 +40,32 @@ export async function getWorkspaceDocuments(
     [projectId]
   );
 }
+export async function updateWorkspaceDocument(
+  id,
+  content
+) {
+  const db = await initDB();
+
+  await db.execute(
+    `
+      UPDATE workspace_documents
+      SET content = ?
+      WHERE id = ?
+    `,
+    [content, id]
+  );
+}
+
+export async function getDocumentById(id) {
+  const db = await initDB();
+
+  const result = await db.select(
+    `
+      SELECT * FROM workspace_documents
+      WHERE id = ?
+    `,
+    [id]
+  );
+
+  return result[0];
+}

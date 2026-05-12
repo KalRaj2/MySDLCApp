@@ -1,4 +1,11 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  useNavigate,
+} from "react-router-dom";
 
 import {
   getProjects,
@@ -9,16 +16,23 @@ import {
 } from "../services/workspaceService";
 
 export default function Workspace() {
-  const [projects, setProjects] =
+
+  const navigate =
+    useNavigate();
+
+  const [projects,
+    setProjects] =
     useState([]);
 
-  const [selectedProject,
-    setSelectedProject] =
-    useState(null);
+  const [
+    selectedProject,
+    setSelectedProject,
+  ] = useState(null);
 
-  const [documents,
-    setDocuments] =
-    useState([]);
+  const [
+    documents,
+    setDocuments,
+  ] = useState([]);
 
   useEffect(() => {
     loadProjects();
@@ -38,6 +52,7 @@ export default function Workspace() {
 
   const selectProject =
     async (project) => {
+
       setSelectedProject(project);
 
       const docs =
@@ -62,19 +77,21 @@ export default function Workspace() {
         <div className="flex flex-col gap-3">
 
           {projects.map((project) => (
+
             <button
               key={project.id}
               onClick={() =>
                 selectProject(project)
               }
-              className={`p-4 rounded-xl text-left
+              className={`p-4 rounded-xl text-left transition-all
               ${
                 selectedProject?.id ===
                 project.id
                   ? "bg-blue-600"
-                  : "bg-slate-700"
+                  : "bg-slate-700 hover:bg-slate-600"
               }`}
             >
+
               <div className="font-semibold">
                 {project.name}
               </div>
@@ -82,7 +99,9 @@ export default function Workspace() {
               <div className="text-xs text-gray-300 mt-1">
                 {project.created_at}
               </div>
+
             </button>
+
           ))}
 
         </div>
@@ -95,6 +114,7 @@ export default function Workspace() {
 
         {selectedProject ? (
           <>
+
             <h1 className="text-3xl font-bold mb-6">
               {selectedProject.name}
             </h1>
@@ -102,19 +122,29 @@ export default function Workspace() {
             <div className="grid grid-cols-2 gap-4">
 
               {documents.length === 0 && (
+
                 <div className="bg-slate-800 p-5 rounded-xl">
                   No workspace documents yet.
                 </div>
+
               )}
 
               {documents.map((doc) => (
+
                 <div
                   key={doc.id}
-                  className="bg-slate-800 p-5 rounded-xl"
+                  onClick={() =>
+                    navigate(
+                      `/document/${doc.id}`
+                    )
+                  }
+                  className="bg-slate-800 p-5 rounded-xl cursor-pointer hover:bg-slate-700 transition-all"
                 >
+
                   <div className="flex justify-between items-center">
 
                     <div>
+
                       <h2 className="text-xl font-semibold">
                         {doc.title}
                       </h2>
@@ -122,23 +152,33 @@ export default function Workspace() {
                       <p className="text-sm text-gray-400">
                         {doc.type}
                       </p>
+
                     </div>
 
                   </div>
 
                   <div className="mt-4 text-sm text-gray-300 line-clamp-6">
-                    {doc.content.slice(0, 200)}
+
+                    {doc.content.slice(
+                      0,
+                      200
+                    )}
+
                   </div>
 
                 </div>
+
               ))}
 
             </div>
+
           </>
         ) : (
+
           <div>
             No project selected
           </div>
+
         )}
 
       </div>

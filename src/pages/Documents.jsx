@@ -1,18 +1,33 @@
-import { useState } from "react";
+import {
+  useState,
+  useEffect,
+} from "react";
 
 import toast from "react-hot-toast";
 
-import { templates } from "../services/templateService";
+import { templates }
+from "../services/templateService";
 
-import { streamOllama } from "../services/streamAI";
+import { streamOllama }
+from "../services/streamAI";
 
 import {
   exportMarkdown,
   exportText,
 } from "../services/exportService";
 
+import {
+  getProjects,
+} from "../services/projectService";
+
+import {
+  saveWorkspaceDocument,
+} from "../services/workspaceService";
+
 export default function Documents() {
-  const [projectIdea, setProjectIdea] =
+
+  const [projectIdea,
+    setProjectIdea] =
     useState("");
 
   const [
@@ -20,15 +35,52 @@ export default function Documents() {
     setSelectedTemplate,
   ] = useState(templates[0]);
 
-  const [result, setResult] =
+  const [result,
+    setResult] =
     useState("");
 
-  const [loading, setLoading] =
+  const [loading,
+    setLoading] =
     useState(false);
+
+  const [projects,
+    setProjects] =
+    useState([]);
+
+  const [
+    selectedProject,
+    setSelectedProject,
+  ] = useState("");
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  const loadProjects =
+    async () => {
+      try {
+
+        const data =
+          await getProjects();
+
+        setProjects(data);
+
+        if (data.length > 0) {
+          setSelectedProject(
+            data[0].id
+          );
+        }
+
+      } catch (error) {
+        console.error(error);
+      }
+    };
 
   const generateDocument =
     async () => {
+
       if (!projectIdea.trim()) {
+
         toast.error(
           "Please enter project idea"
         );
@@ -36,7 +88,17 @@ export default function Documents() {
         return;
       }
 
+      if (!selectedProject) {
+
+        toast.error(
+          "Please select project"
+        );
+
+        return;
+      }
+
       try {
+
         setLoading(true);
 
         setResult("");
@@ -52,30 +114,50 @@ ${selectedTemplate.prompt}
 Generate detailed professional documentation.
 `;
 
+        let generatedText = "";
+
         await streamOllama(
           prompt,
           (chunk) => {
+
+            generatedText = chunk;
+
             setResult(chunk);
+
           }
         );
 
+        await saveWorkspaceDocument({
+          project_id: selectedProject,
+          title: selectedTemplate.title,
+          type: selectedTemplate.id,
+          content: generatedText,
+        });
+
         toast.success(
-          "Document generated"
+          "Document generated and saved"
         );
+
       } catch (error) {
+
         console.error(error);
 
         toast.error(
           "Generation failed"
         );
+
       } finally {
+
         setLoading(false);
+
       }
     };
 
   const handleExportMarkdown =
     async () => {
+
       if (!result) {
+
         toast.error(
           "Nothing to export"
         );
@@ -90,19 +172,25 @@ Generate detailed professional documentation.
         );
 
       if (success) {
+
         toast.success(
           "Markdown exported"
         );
+
       } else {
+
         toast.error(
           "Export failed"
         );
+
       }
     };
 
   const handleExportText =
     async () => {
+
       if (!result) {
+
         toast.error(
           "Nothing to export"
         );
@@ -117,17 +205,22 @@ Generate detailed professional documentation.
         );
 
       if (success) {
+
         toast.success(
           "Text exported"
         );
+
       } else {
+
         toast.error(
           "Export failed"
         );
+
       }
     };
 
   return (
+
     <div>
 
       <h1 className="text-3xl font-bold mb-6">
@@ -154,9 +247,37 @@ Generate detailed professional documentation.
               className="p-4 rounded-xl bg-slate-700 outline-none resize-none"
             />
 
+            {/* PROJECT SELECTOR */}
+
+            <select
+              value={selectedProject}
+              onChange={(e) =>
+                setSelectedProject(
+                  e.target.value
+                )
+              }
+              className="p-3 rounded-xl bg-slate-700 outline-none"
+            >
+
+              {projects.map((project) => (
+
+                <option
+                  key={project.id}
+                  value={project.id}
+                >
+                  {project.name}
+                </option>
+
+              ))}
+
+            </select>
+
+            {/* TEMPLATE SELECTOR */}
+
             <select
               value={selectedTemplate.id}
               onChange={(e) => {
+
                 const template =
                   templates.find(
                     (t) =>
@@ -167,19 +288,24 @@ Generate detailed professional documentation.
                 setSelectedTemplate(
                   template
                 );
+
               }}
               className="p-3 rounded-xl bg-slate-700 outline-none"
             >
+
               {templates.map(
                 (template) => (
+
                   <option
                     key={template.id}
                     value={template.id}
                   >
                     {template.title}
                   </option>
+
                 )
               )}
+
             </select>
 
             <button
@@ -189,9 +315,11 @@ Generate detailed professional documentation.
               disabled={loading}
               className="bg-blue-600 hover:bg-blue-700 transition-all p-4 rounded-xl disabled:opacity-50"
             >
+
               {loading
                 ? "Generating..."
                 : "Generate Document"}
+
             </button>
 
           </div>
@@ -203,11 +331,15 @@ Generate detailed professional documentation.
         <div className="bg-slate-900 p-6 rounded-xl flex flex-col">
 
           <div className="flex-1 overflow-auto whitespace-pre-wrap">
+
             {loading
               ? "AI generating document..."
               : result ||
                 "Generated document appears here"}
+
           </div>
+
+          {/* EXPORT BUTTONS */}
 
           <div className="mt-6 flex gap-3">
 

@@ -1,3 +1,5 @@
+import DocumentEditor from "../pages/DocumentEditor";
+import RTM from "../pages/RTM";
 import Documents from "../pages/Documents";
 import AIChat from "../pages/AIChat";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -23,6 +25,8 @@ export default function AppRouter() {
           <Route path="/ai-chat" element={<AIChat />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/workspace" element={<Workspace />} />
+          <Route path="/document/:id" element={<DocumentEditor />} />
+          <Route path="/rtm" element={<RTM />} />
         </Routes>
       </MainLayout>
     </BrowserRouter>
