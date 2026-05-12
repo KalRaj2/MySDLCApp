@@ -1,3 +1,4 @@
+import Architect from "../pages/Architect";
 import AgileBoard from "../pages/AgileBoard";
 import DocumentEditor from "../pages/DocumentEditor";
 import RTM from "../pages/RTM";
@@ -29,6 +30,7 @@ export default function AppRouter() {
           <Route path="/document/:id" element={<DocumentEditor />} />
           <Route path="/rtm" element={<RTM />} />
           <Route path="/agile" element={<AgileBoard />} />
+          <Route path="/architect" element={<Architect />} />
         </Routes>
       </MainLayout>
     </BrowserRouter>

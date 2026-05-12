@@ -10,6 +10,7 @@ import {
   Briefcase,
   GitBranch,
   KanbanSquare,
+  Blocks,
 } from "lucide-react";
 
 const menus = [
@@ -62,6 +63,11 @@ const menus = [
   name: "Agile Board",
   icon: <KanbanSquare size={18} />,
   path: "/agile",
+},
+{
+  name: "Architect AI",
+  icon: <Blocks size={18} />,
+  path: "/architect",
 },
 ];
 

@@ -3,7 +3,7 @@
 
   "identifier": "default",
 
-  "description": "Capability for the main window",
+  "description": "Main app permissions",
 
   "windows": ["main"],
 
@@ -18,6 +18,25 @@
 
     "fs:default",
     "fs:allow-read-text-file",
-    "fs:allow-write-text-file"
+    "fs:allow-write-text-file",
+
+    "dialog:default",
+    "dialog:allow-save",
+
+
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [
+        {
+          "path": "C:/Users/Admin/Documents/**"
+        },
+        {
+          "path": "C:/Users/Admin/Desktop/**"
+        },
+        {
+          "path": "C:/Users/Admin/Downloads/**"
+        }
+      ]
+    }
   ]
 }
