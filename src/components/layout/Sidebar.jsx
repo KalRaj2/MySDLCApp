@@ -11,6 +11,7 @@ import {
   GitBranch,
   KanbanSquare,
   Blocks,
+  Code2,
 } from "lucide-react";
 
 const menus = [
@@ -68,6 +69,11 @@ const menus = [
   name: "Architect AI",
   icon: <Blocks size={18} />,
   path: "/architect",
+},
+{
+  name: "Code Generator",
+  icon: <Code2 size={18} />,
+  path: "/codegen",
 },
 ];
 

@@ -1,3 +1,4 @@
+import CodeGenerator from "../pages/CodeGenerator";
 import Architect from "../pages/Architect";
 import AgileBoard from "../pages/AgileBoard";
 import DocumentEditor from "../pages/DocumentEditor";
@@ -31,6 +32,7 @@ export default function AppRouter() {
           <Route path="/rtm" element={<RTM />} />
           <Route path="/agile" element={<AgileBoard />} />
           <Route path="/architect" element={<Architect />} />
+          <Route path="/codegen" element={<CodeGenerator />} />
         </Routes>
       </MainLayout>
     </BrowserRouter>
