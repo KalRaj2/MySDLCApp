@@ -1,3 +1,11 @@
+import WorkspaceTabs from "../components/WorkspaceTabs";
+
+import ProjectExplorer from "../components/ProjectExplorer";
+
+import {
+  getGeneratedFiles,
+} from "../services/generatedFileService";
+
 import { useState } from "react";
 
 import {
@@ -51,6 +59,12 @@ export default function CodeGenerator() {
     setSelectedFile,
   ] = useState(null);
 
+  const [openTabs, setOpenTabs] =
+  useState([]);
+
+const [activeProject, setActiveProject] =
+  useState(null);
+
   function exportResponse() {
 
     const blob = new Blob(
@@ -76,6 +90,7 @@ export default function CodeGenerator() {
     URL.revokeObjectURL(url);
   }
 
+  
   async function generateCode() {
 
     try {
@@ -273,6 +288,81 @@ ${prompt}
     }
   }
 
+  function openFile(file) {
+
+  const exists =
+    openTabs.find(
+      (f) =>
+        f.fileName ===
+        file.fileName
+    );
+
+  if (!exists) {
+
+    setOpenTabs([
+      ...openTabs,
+      file,
+    ]);
+  }
+
+  setSelectedFile(file);
+}
+
+function closeTab(file) {
+
+  const updated =
+    openTabs.filter(
+      (f) =>
+        f.fileName !==
+        file.fileName
+    );
+
+  setOpenTabs(updated);
+
+  if (
+    selectedFile?.fileName ===
+    file.fileName
+  ) {
+
+    setSelectedFile(
+      updated[0] || null
+    );
+  }
+}
+async function handleProjectSelect(
+  project
+) {
+
+  try {
+
+    setActiveProject(project);
+
+    const files =
+      await getGeneratedFiles(
+        project.name
+      );
+
+    setGeneratedFiles(files);
+
+    if (files.length > 0) {
+
+      setSelectedFile(
+        files[0]
+      );
+
+      setOpenTabs([
+        files[0],
+      ]);
+    }
+
+  } catch (error) {
+
+    console.error(
+      "LOAD PROJECT FILES ERROR:",
+      error
+    );
+  }
+}
   return (
 
     <div
@@ -461,72 +551,138 @@ Describe your project requirements...
       </div>
 
       <div
-        className="
-          mt-8
-          grid
-          grid-cols-1
-          md:grid-cols-4
-          gap-4
-        "
-      >
+  className="
+    mt-6
+    grid
+    grid-cols-12
+    gap-4
+    h-[80vh]
+  "
+>
 
-        <div
-          className="
-            h-[80vh]
-            rounded
-            overflow-hidden
-            border
-            border-gray-800
-          "
-        >
+  {/* PROJECT EXPLORER */}
 
-          <FileTree
+  <div
+    className="
+      col-span-2
+      bg-gray-900
+      rounded
+      overflow-hidden
+      border
+      border-gray-800
+    "
+  >
 
-            files={generatedFiles}
+    <ProjectExplorer
+      onSelectProject={
+        handleProjectSelect
+      }
+    />
 
-            selectedFile={selectedFile}
+  </div>
 
-            onSelect={(file) =>
-              setSelectedFile(file)
-            }
+  {/* FILE TREE */}
 
-          />
+  <div
+    className="
+      col-span-2
+      bg-gray-900
+      rounded
+      overflow-hidden
+      border
+      border-gray-800
+    "
+  >
 
-        </div>
+    <FileTree
 
-        <div
-          className="
-            md:col-span-3
-            bg-gray-900
-            rounded
-            overflow-hidden
-            h-[80vh]
-            border
-            border-gray-800
-          "
-        >
+      files={generatedFiles}
 
-          <CodeEditor
+      selectedFile={selectedFile}
 
-            file={selectedFile}
+      onSelect={(file) => {
 
-            onChange={(value) => {
+        openFile(file);
 
-              setSelectedFile({
+      }}
 
-                ...selectedFile,
+    />
 
-                code: value,
+  </div>
 
-              });
+  {/* EDITOR */}
 
-            }}
+  <div
+    className="
+      col-span-8
+      flex
+      flex-col
+      bg-gray-900
+      rounded
+      overflow-hidden
+      border
+      border-gray-800
+    "
+  >
 
-          />
+    <WorkspaceTabs
 
-        </div>
+      tabs={openTabs}
 
-      </div>
+      activeTab={selectedFile}
+
+      onTabClick={(file) => {
+
+        setSelectedFile(file);
+
+      }}
+
+      onClose={closeTab}
+
+    />
+
+    <div className="flex-1">
+
+      <CodeEditor
+
+        file={selectedFile}
+
+        onChange={(value) => {
+
+          if (!selectedFile)
+            return;
+
+          const updatedFile = {
+
+            ...selectedFile,
+
+            code: value,
+
+          };
+
+          setSelectedFile(
+            updatedFile
+          );
+
+          setOpenTabs(
+
+            openTabs.map((f) =>
+
+              f.fileName ===
+              updatedFile.fileName
+                ? updatedFile
+                : f
+            )
+          );
+        }}
+
+      />
+
+    </div>
+
+  </div>
+
+</div>
 
       <div className="mt-8">
 
