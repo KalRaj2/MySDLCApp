@@ -6,11 +6,19 @@ export async function initDB() {
 
   try {
 
+    /*
+      PREVENT MULTIPLE INITIALIZATIONS
+    */
+
     if (dbInstance) {
 
       return dbInstance;
 
     }
+
+    /*
+      LOAD SQLITE DATABASE
+    */
 
     dbInstance =
       await Database.load(
@@ -74,25 +82,12 @@ export async function initDB() {
     );
 
     /*
-      REMOVE OLD generated_files TABLE
-      IMPORTANT:
-      OLD TABLE USED project_id
-      NEW TABLE USES project_name
-    */
-
-    await dbInstance.execute(`
-
-      DROP TABLE IF EXISTS generated_files
-
-    `);
-
-    /*
       GENERATED FILES TABLE
     */
 
     await dbInstance.execute(`
 
-      CREATE TABLE generated_files (
+      CREATE TABLE IF NOT EXISTS generated_files (
 
         id INTEGER PRIMARY KEY AUTOINCREMENT,
 

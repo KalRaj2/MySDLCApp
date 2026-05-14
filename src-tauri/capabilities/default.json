@@ -3,7 +3,7 @@
 
   "identifier": "default",
 
-  "description": "Main app permissions",
+  "description": "Default desktop permissions",
 
   "windows": ["main"],
 
@@ -15,28 +15,29 @@
     "sql:allow-load",
     "sql:allow-execute",
     "sql:allow-select",
-
-    "fs:default",
-    "fs:allow-read-text-file",
-    "fs:allow-write-text-file",
+    "sql:allow-close",
 
     "dialog:default",
     "dialog:allow-save",
 
+    "fs:default",
+    "fs:allow-write-text-file",
+    "fs:allow-write-file",
+    "fs:allow-read-file",
+    "fs:allow-mkdir",
 
     {
-      "identifier": "fs:allow-write-text-file",
+      "identifier": "fs:scope",
+
       "allow": [
-        {
-          "path": "C:/Users/Admin/Documents/**"
-        },
-        {
-          "path": "C:/Users/Admin/Desktop/**"
-        },
-        {
-          "path": "C:/Users/Admin/Downloads/**"
-        }
+
+        "$HOME/**",
+        "$DOWNLOAD/**",
+        "$DESKTOP/**",
+        "$DOCUMENT/**"
+
       ]
     }
+
   ]
 }

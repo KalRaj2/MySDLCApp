@@ -2,75 +2,86 @@ export function parseGeneratedFiles(text) {
 
   try {
 
-    if (!text) return [];
+    if (!text) {
+
+      return [];
+
+    }
 
     const files = [];
 
     /*
-      FORMAT 1:
+      SUPPORTS BOTH:
+
+      1)
 
       FILE: src/App.jsx
       ```jsx
       code
       ```
+
+      2)
+
+      FILE: src/App.jsx
+      import React ...
+
     */
 
-    const fileRegex =
-      /FILE:\s*(.*?)\n```(?:\w+)?\n([\s\S]*?)```/g;
+    const sections =
+      text.split("FILE:");
 
-    let match;
+    for (const section of sections) {
 
-    while (
-      (match = fileRegex.exec(text)) !== null
-    ) {
+      const trimmed =
+        section.trim();
+
+      if (!trimmed) {
+
+        continue;
+
+      }
+
+      const lines =
+        trimmed.split("\n");
 
       const fileName =
-        match[1]?.trim();
+        lines[0]?.trim();
 
-      const code =
-        match[2]?.trim();
+      if (!fileName) {
 
-      if (fileName && code) {
+        continue;
 
-        files.push({
-
-          fileName,
-
-          code,
-
-        });
       }
-    }
 
-    /*
-      FORMAT 2:
+      let code =
+        lines
+          .slice(1)
+          .join("\n")
+          .trim();
 
-      // src/App.jsx
-    */
+      /*
+        REMOVE MARKDOWN FENCES
+      */
 
-    const commentRegex =
-      /\/\/\s*(src\/.*?\.\w+)\n([\s\S]*?)(?=\/\/\s*src\/|\Z)/g;
+      code = code
+        .replace(/```[\w]*/g, "")
+        .replace(/```/g, "")
+        .trim();
 
-    while (
-      (match = commentRegex.exec(text)) !== null
-    ) {
+      if (!code) {
 
-      const fileName =
-        match[1]?.trim();
+        continue;
 
-      const code =
-        match[2]?.trim();
-
-      if (fileName && code) {
-
-        files.push({
-
-          fileName,
-
-          code,
-
-        });
       }
+
+      files.push({
+
+        fileName,
+
+        code,
+
+      });
+
     }
 
     console.log(
@@ -88,5 +99,6 @@ export function parseGeneratedFiles(text) {
     );
 
     return [];
+
   }
 }

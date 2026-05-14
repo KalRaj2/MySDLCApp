@@ -1,28 +1,33 @@
-export default function FileTree({
+import React, {
+  useMemo,
+  useState,
+} from "react";
 
-  files = [],
+/*
+  BUILD TREE
+*/
 
-  selectedFile,
+function buildTree(files) {
 
-  onSelect,
+  const root = {};
 
-}) {
+  files.forEach((file) => {
 
-  function buildTree(files) {
+    const path =
+      file.file_name ||
+      file.fileName;
 
-    const tree = {};
+    const parts =
+      path.split("/");
 
-    files.forEach((file) => {
+    let current = root;
 
-      const parts =
-        file.fileName.split("/");
-
-      let current = tree;
-
-      parts.forEach((part, index) => {
+    parts.forEach(
+      (part, index) => {
 
         const isFile =
-          index === parts.length - 1;
+          index ===
+          parts.length - 1;
 
         if (!current[part]) {
 
@@ -31,122 +36,190 @@ export default function FileTree({
             : {};
         }
 
-        current = current[part];
-      });
-    });
+        current =
+          current[part];
+      }
+    );
+  });
 
-    return tree;
+  return root;
+}
+
+/*
+  TREE NODE
+*/
+
+function TreeNode({
+
+  name,
+
+  node,
+
+  level = 0,
+
+  onSelect,
+
+}) {
+
+  const [open, setOpen] =
+    useState(true);
+
+  const isFile =
+    node?.fileName ||
+    node?.file_name;
+
+  /*
+    FILE
+  */
+
+  if (isFile) {
+
+    return (
+
+      <div
+        onClick={() =>
+          onSelect(node)
+        }
+        className="
+          px-2
+          py-1
+          cursor-pointer
+          hover:bg-gray-800
+          text-sm
+        "
+        style={{
+          paddingLeft:
+            `${level * 16}px`,
+        }}
+      >
+
+        📄 {name}
+
+      </div>
+    );
   }
 
-  const tree =
-    buildTree(files);
+  /*
+    FOLDER
+  */
 
-  function renderTree(node, level = 0) {
+  return (
 
-    return Object.keys(node).map((key) => {
+    <div>
 
-      const item = node[key];
+      <div
+        onClick={() =>
+          setOpen(!open)
+        }
+        className="
+          px-2
+          py-1
+          cursor-pointer
+          hover:bg-gray-800
+          font-semibold
+          text-sm
+        "
+        style={{
+          paddingLeft:
+            `${level * 16}px`,
+        }}
+      >
 
-      const isFile =
-        item.fileName;
+        {open ? "📂" : "📁"} {name}
 
-      if (isFile) {
+      </div>
 
-        return (
+      {open && (
 
-          <div
-            key={item.fileName}
-            onClick={() =>
-              onSelect(item)
-            }
-            className={`
-              px-2
-              py-1
-              rounded
-              cursor-pointer
-              text-sm
-              mb-1
-              ${
-                selectedFile?.fileName ===
-                item.fileName
-                  ? "bg-blue-700"
-                  : "hover:bg-gray-700"
-              }
-            `}
-            style={{
-              paddingLeft:
-                `${level * 16}px`,
-            }}
-          >
+        <div>
 
-            📄 {key}
+          {Object.entries(node).map(
 
-          </div>
-        );
-      }
+            ([childName, childNode]) => (
 
-      return (
+              <TreeNode
 
-        <div key={key}>
+                key={childName}
 
-          <div
-            className="
-              px-2
-              py-1
-              text-yellow-400
-              font-bold
-              text-sm
-            "
-            style={{
-              paddingLeft:
-                `${level * 16}px`,
-            }}
-          >
+                name={childName}
 
-            📁 {key}
+                node={childNode}
 
-          </div>
+                level={level + 1}
 
-          <div>
+                onSelect={onSelect}
 
-            {renderTree(
-              item,
-              level + 1
-            )}
-
-          </div>
+              />
+            )
+          )}
 
         </div>
-      );
-    });
-  }
+      )}
+
+    </div>
+  );
+}
+
+export default function FileTree({
+
+  files = [],
+
+  onSelect,
+
+}) {
+
+  const tree =
+    useMemo(() => {
+
+      return buildTree(files);
+
+    }, [files]);
 
   return (
 
     <div
       className="
         bg-gray-900
+        text-white
         h-full
         overflow-auto
-        p-2
       "
     >
 
-      {files.length === 0 && (
+      <div
+        className="
+          p-3
+          border-b
+          border-gray-800
+          font-bold
+        "
+      >
 
-        <div
-          className="
-            text-gray-400
-            text-sm
-          "
-        >
+        Explorer
 
-          No generated files
+      </div>
 
-        </div>
-      )}
+      <div className="p-2">
 
-      {renderTree(tree)}
+        {Object.entries(tree).map(
+
+          ([name, node]) => (
+
+            <TreeNode
+
+              key={name}
+
+              name={name}
+
+              node={node}
+
+              onSelect={onSelect}
+
+            />
+          )
+        )}
+
+      </div>
 
     </div>
   );

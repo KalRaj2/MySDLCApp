@@ -1,12 +1,12 @@
-import WorkspaceTabs from "../components/WorkspaceTabs";
+import { useState } from "react";
 
-import ProjectExplorer from "../components/ProjectExplorer";
+import { save } from "@tauri-apps/plugin-dialog";
 
 import {
-  getGeneratedFiles,
-} from "../services/generatedFileService";
-
-import { useState } from "react";
+  writeTextFile,
+  mkdir,
+  BaseDirectory,
+} from "@tauri-apps/plugin-fs";
 
 import {
   generateAIResponse,
@@ -29,6 +29,10 @@ import CodeEditor from "../components/CodeEditor";
 
 import FileTree from "../components/FileTree";
 
+import WorkspaceTabs from "../components/WorkspaceTabs";
+
+import ProjectExplorer from "../components/ProjectExplorer";
+
 export default function CodeGenerator() {
 
   const [projectName, setProjectName] =
@@ -49,48 +53,177 @@ export default function CodeGenerator() {
   const [loading, setLoading] =
     useState(false);
 
-  const [
-    generatedFiles,
-    setGeneratedFiles,
-  ] = useState([]);
+  const [generatedFiles, setGeneratedFiles] =
+    useState([]);
 
-  const [
-    selectedFile,
-    setSelectedFile,
-  ] = useState(null);
+  const [selectedFile, setSelectedFile] =
+    useState(null);
 
   const [openTabs, setOpenTabs] =
-  useState([]);
+    useState([]);
 
-const [activeProject, setActiveProject] =
-  useState(null);
+  const [activeProject, setActiveProject] =
+    useState(null);
 
-  function exportResponse() {
+  /*
+    EXPORT FULL AI RESPONSE
+  */
 
-    const blob = new Blob(
-      [response],
-      {
-        type: "text/plain",
+  async function exportResponse() {
+
+    try {
+
+      if (!response) {
+
+        alert("No response found");
+
+        return;
       }
-    );
 
-    const url =
-      URL.createObjectURL(blob);
+      const filePath =
+        await save({
 
-    const a =
-      document.createElement("a");
+          defaultPath:
+            `${projectName || "project"}-response.txt`,
 
-    a.href = url;
+        });
 
-    a.download =
-      `${projectName || "project"}-response.txt`;
+      if (!filePath) {
 
-    a.click();
+        return;
+      }
 
-    URL.revokeObjectURL(url);
+      await writeTextFile(
+        filePath,
+        response
+      );
+
+      alert(
+        "Response exported successfully"
+      );
+
+    } catch (error) {
+
+      console.error(
+        "EXPORT RESPONSE ERROR:",
+        error
+      );
+
+      alert(
+        "Export failed"
+      );
+    }
   }
 
-  
+  /*
+    EXPORT FULL PROJECT
+  */
+
+  async function handleExportProject() {
+
+    try {
+
+      if (
+        !generatedFiles ||
+        generatedFiles.length === 0
+      ) {
+
+        alert(
+          "No generated files found"
+        );
+
+        return;
+      }
+
+      /*
+        SELECT FOLDER
+      */
+
+      const selectedFolder =
+        await save({
+
+          defaultPath:
+            projectName || "MyProject",
+
+        });
+
+      if (!selectedFolder) {
+
+        return;
+      }
+
+      /*
+        WRITE ALL FILES
+      */
+
+      for (const file of generatedFiles) {
+
+        try {
+
+          const fullPath =
+            `${selectedFolder}/${file.fileName}`;
+
+          /*
+            CREATE FOLDERS
+          */
+
+          const folderPath =
+            fullPath.substring(
+              0,
+              fullPath.lastIndexOf("/")
+            );
+
+          await mkdir(
+            folderPath,
+            {
+              recursive: true,
+            }
+          );
+
+          /*
+            WRITE FILE
+          */
+
+          await writeTextFile(
+            fullPath,
+            file.code || file.content || ""
+          );
+
+          console.log(
+            "EXPORTED:",
+            fullPath
+          );
+
+        } catch (fileError) {
+
+          console.error(
+            "FILE EXPORT ERROR:",
+            fileError
+          );
+        }
+      }
+
+      alert(
+        "Project exported successfully"
+      );
+
+    } catch (error) {
+
+      console.error(
+        "PROJECT EXPORT ERROR:",
+        error
+      );
+
+      alert(
+        "Project export failed"
+      );
+    }
+  }
+
+  /*
+    GENERATE AI CODE
+  */
+
   async function generateCode() {
 
     try {
@@ -103,33 +236,33 @@ const [activeProject, setActiveProject] =
 
       setSelectedFile(null);
 
+      setOpenTabs([]);
+
       const finalPrompt = `
 
 You are a senior software engineer.
 
-CRITICAL RULES:
+STRICT RULES:
 
 1. ONLY generate FILE blocks
 2. NEVER explain anything
-3. NEVER use comments for filenames
-4. NEVER write markdown headings
-5. NEVER write normal text
-6. ALWAYS use THIS EXACT FORMAT:
+3. NEVER write markdown headings
+4. NEVER write normal text
+5. ALWAYS use THIS EXACT FORMAT
 
-FILE: src/components/Login.jsx
+FILE: src/App.jsx
 \`\`\`jsx
-FULL CODE HERE
+FULL CODE
 \`\`\`
 
-FILE: src/services/authService.js
+FILE: src/services/api.js
 \`\`\`javascript
-FULL CODE HERE
+FULL CODE
 \`\`\`
 
+6. EVERY FILE MUST START WITH FILE:
 7. GENERATE MULTIPLE FILES
-8. EACH FILE MUST START WITH "FILE:"
-9. DO NOT SKIP "FILE:"
-10. GENERATE COMPLETE WORKING CODE
+8. GENERATE COMPLETE WORKING CODE
 
 PROJECT NAME:
 ${projectName}
@@ -156,9 +289,7 @@ ${prompt}
           onStream: (text) => {
 
             setResponse(text);
-
           },
-
         });
 
       console.log(
@@ -167,6 +298,10 @@ ${prompt}
       );
 
       setResponse(aiResponse);
+
+      /*
+        PARSE FILES
+      */
 
       const files =
         parseGeneratedFiles(
@@ -183,15 +318,18 @@ ${prompt}
         files.length === 0
       ) {
 
-        setResponse(
-          aiResponse ||
-          "No files generated"
+        alert(
+          "No files parsed"
         );
 
         return;
       }
 
       const savedFiles = [];
+
+      /*
+        SAVE FILES
+      */
 
       for (const file of files) {
 
@@ -207,7 +345,6 @@ ${prompt}
 
             content:
               file.code,
-
           };
 
           console.log(
@@ -229,7 +366,6 @@ ${prompt}
 
             content:
               file.code,
-
           });
 
           savedFiles.push({
@@ -254,17 +390,21 @@ ${prompt}
         savedFiles
       );
 
-      if (
-        savedFiles.length > 0
-      ) {
+      if (savedFiles.length > 0) {
 
         setSelectedFile(
           savedFiles[0]
         );
+
+        setOpenTabs([
+          savedFiles[0],
+        ]);
       }
 
       const refreshed =
-        await getGeneratedFiles();
+        await getGeneratedFiles(
+          projectName
+        );
 
       console.log(
         "DATABASE FILES:",
@@ -288,81 +428,95 @@ ${prompt}
     }
   }
 
+  /*
+    OPEN FILE
+  */
+
   function openFile(file) {
 
-  const exists =
-    openTabs.find(
-      (f) =>
-        f.fileName ===
-        file.fileName
-    );
-
-  if (!exists) {
-
-    setOpenTabs([
-      ...openTabs,
-      file,
-    ]);
-  }
-
-  setSelectedFile(file);
-}
-
-function closeTab(file) {
-
-  const updated =
-    openTabs.filter(
-      (f) =>
-        f.fileName !==
-        file.fileName
-    );
-
-  setOpenTabs(updated);
-
-  if (
-    selectedFile?.fileName ===
-    file.fileName
-  ) {
-
-    setSelectedFile(
-      updated[0] || null
-    );
-  }
-}
-async function handleProjectSelect(
-  project
-) {
-
-  try {
-
-    setActiveProject(project);
-
-    const files =
-      await getGeneratedFiles(
-        project.name
+    const exists =
+      openTabs.find(
+        (f) =>
+          f.fileName ===
+          file.fileName
       );
 
-    setGeneratedFiles(files);
-
-    if (files.length > 0) {
-
-      setSelectedFile(
-        files[0]
-      );
+    if (!exists) {
 
       setOpenTabs([
-        files[0],
+        ...openTabs,
+        file,
       ]);
     }
 
-  } catch (error) {
-
-    console.error(
-      "LOAD PROJECT FILES ERROR:",
-      error
-    );
+    setSelectedFile(file);
   }
-}
+
+  /*
+    CLOSE TAB
+  */
+
+  function closeTab(file) {
+
+    const updated =
+      openTabs.filter(
+        (f) =>
+          f.fileName !==
+          file.fileName
+      );
+
+    setOpenTabs(updated);
+
+    if (
+      selectedFile?.fileName ===
+      file.fileName
+    ) {
+
+      setSelectedFile(
+        updated[0] || null
+      );
+    }
+  }
+
+  /*
+    LOAD PROJECT
+  */
+
+  async function handleProjectSelect(
+    project
+  ) {
+
+    try {
+
+      setActiveProject(project);
+
+      const files =
+        await getGeneratedFiles(
+          project.name
+        );
+
+      setGeneratedFiles(files);
+
+      if (files.length > 0) {
+
+        setSelectedFile(
+          files[0]
+        );
+
+        setOpenTabs([
+          files[0],
+        ]);
+      }
+
+    } catch (error) {
+
+      console.error(
+        "LOAD PROJECT ERROR:",
+        error
+      );
+    }
+  }
+
   return (
 
     <div
@@ -429,25 +583,11 @@ async function handleProjectSelect(
           "
         >
 
-          <option>
-            React
-          </option>
-
-          <option>
-            Vue
-          </option>
-
-          <option>
-            Angular
-          </option>
-
-          <option>
-            Node.js
-          </option>
-
-          <option>
-            Express
-          </option>
+          <option>React</option>
+          <option>Vue</option>
+          <option>Angular</option>
+          <option>Node.js</option>
+          <option>Express</option>
 
         </select>
 
@@ -467,17 +607,9 @@ async function handleProjectSelect(
           "
         >
 
-          <option>
-            JavaScript
-          </option>
-
-          <option>
-            TypeScript
-          </option>
-
-          <option>
-            Python
-          </option>
+          <option>JavaScript</option>
+          <option>TypeScript</option>
+          <option>Python</option>
 
         </select>
 
@@ -548,141 +680,130 @@ Describe your project requirements...
 
         </button>
 
+        <button
+          onClick={handleExportProject}
+          className="
+            bg-purple-600
+            hover:bg-purple-700
+            px-6
+            py-3
+            rounded
+            font-bold
+          "
+        >
+
+          Export Full Project
+
+        </button>
+
       </div>
 
       <div
-  className="
-    mt-6
-    grid
-    grid-cols-12
-    gap-4
-    h-[80vh]
-  "
->
+        className="
+          mt-6
+          grid
+          grid-cols-12
+          gap-4
+          h-[80vh]
+        "
+      >
 
-  {/* PROJECT EXPLORER */}
+        <div
+          className="
+            col-span-2
+            bg-gray-900
+            rounded
+            border
+            border-gray-800
+            overflow-hidden
+          "
+        >
 
-  <div
-    className="
-      col-span-2
-      bg-gray-900
-      rounded
-      overflow-hidden
-      border
-      border-gray-800
-    "
-  >
+          <ProjectExplorer
+            onSelectProject={
+              handleProjectSelect
+            }
+          />
 
-    <ProjectExplorer
-      onSelectProject={
-        handleProjectSelect
-      }
-    />
+        </div>
 
-  </div>
+        <div
+          className="
+            col-span-2
+            bg-gray-900
+            rounded
+            border
+            border-gray-800
+            overflow-hidden
+          "
+        >
 
-  {/* FILE TREE */}
+          <FileTree
+            files={generatedFiles}
+            selectedFile={selectedFile}
+            onSelect={openFile}
+          />
 
-  <div
-    className="
-      col-span-2
-      bg-gray-900
-      rounded
-      overflow-hidden
-      border
-      border-gray-800
-    "
-  >
+        </div>
 
-    <FileTree
+        <div
+          className="
+            col-span-8
+            flex
+            flex-col
+            bg-gray-900
+            rounded
+            border
+            border-gray-800
+            overflow-hidden
+          "
+        >
 
-      files={generatedFiles}
+          <WorkspaceTabs
+            tabs={openTabs}
+            activeTab={selectedFile}
+            onTabClick={setSelectedFile}
+            onClose={closeTab}
+          />
 
-      selectedFile={selectedFile}
+          <div className="flex-1">
 
-      onSelect={(file) => {
+            <CodeEditor
+              file={selectedFile}
+              onChange={(value) => {
 
-        openFile(file);
+                if (!selectedFile)
+                  return;
 
-      }}
+                const updatedFile = {
 
-    />
+                  ...selectedFile,
 
-  </div>
+                  code: value,
+                };
 
-  {/* EDITOR */}
+                setSelectedFile(
+                  updatedFile
+                );
 
-  <div
-    className="
-      col-span-8
-      flex
-      flex-col
-      bg-gray-900
-      rounded
-      overflow-hidden
-      border
-      border-gray-800
-    "
-  >
+                setOpenTabs(
 
-    <WorkspaceTabs
+                  openTabs.map((f) =>
 
-      tabs={openTabs}
+                    f.fileName ===
+                    updatedFile.fileName
+                      ? updatedFile
+                      : f
+                  )
+                );
+              }}
+            />
 
-      activeTab={selectedFile}
+          </div>
 
-      onTabClick={(file) => {
+        </div>
 
-        setSelectedFile(file);
-
-      }}
-
-      onClose={closeTab}
-
-    />
-
-    <div className="flex-1">
-
-      <CodeEditor
-
-        file={selectedFile}
-
-        onChange={(value) => {
-
-          if (!selectedFile)
-            return;
-
-          const updatedFile = {
-
-            ...selectedFile,
-
-            code: value,
-
-          };
-
-          setSelectedFile(
-            updatedFile
-          );
-
-          setOpenTabs(
-
-            openTabs.map((f) =>
-
-              f.fileName ===
-              updatedFile.fileName
-                ? updatedFile
-                : f
-            )
-          );
-        }}
-
-      />
-
-    </div>
-
-  </div>
-
-</div>
+      </div>
 
       <div className="mt-8">
 
