@@ -19,6 +19,8 @@ import {
 
 import CodeEditor from "../components/CodeEditor";
 
+import FileTree from "../components/FileTree";
+
 export default function CodeGenerator() {
 
   const [projectName, setProjectName] =
@@ -39,13 +41,40 @@ export default function CodeGenerator() {
   const [loading, setLoading] =
     useState(false);
 
-  const [generatedFiles,
-    setGeneratedFiles] =
-    useState([]);
+  const [
+    generatedFiles,
+    setGeneratedFiles,
+  ] = useState([]);
 
-  const [selectedFile,
-    setSelectedFile] =
-    useState(null);
+  const [
+    selectedFile,
+    setSelectedFile,
+  ] = useState(null);
+
+  function exportResponse() {
+
+    const blob = new Blob(
+      [response],
+      {
+        type: "text/plain",
+      }
+    );
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const a =
+      document.createElement("a");
+
+    a.href = url;
+
+    a.download =
+      `${projectName || "project"}-response.txt`;
+
+    a.click();
+
+    URL.revokeObjectURL(url);
+  }
 
   async function generateCode() {
 
@@ -57,37 +86,47 @@ export default function CodeGenerator() {
 
       setGeneratedFiles([]);
 
+      setSelectedFile(null);
+
       const finalPrompt = `
 
-Project Name:
+You are a senior software engineer.
+
+CRITICAL RULES:
+
+1. ONLY generate FILE blocks
+2. NEVER explain anything
+3. NEVER use comments for filenames
+4. NEVER write markdown headings
+5. NEVER write normal text
+6. ALWAYS use THIS EXACT FORMAT:
+
+FILE: src/components/Login.jsx
+\`\`\`jsx
+FULL CODE HERE
+\`\`\`
+
+FILE: src/services/authService.js
+\`\`\`javascript
+FULL CODE HERE
+\`\`\`
+
+7. GENERATE MULTIPLE FILES
+8. EACH FILE MUST START WITH "FILE:"
+9. DO NOT SKIP "FILE:"
+10. GENERATE COMPLETE WORKING CODE
+
+PROJECT NAME:
 ${projectName}
 
-Framework:
+FRAMEWORK:
 ${framework}
 
-Language:
+LANGUAGE:
 ${language}
 
-Requirements:
+USER REQUIREMENTS:
 ${prompt}
-
-Generate complete production-ready code.
-
-STRICT RULES:
-
-- Generate ALL requested files
-- Use FILE blocks
-- No explanations
-- No markdown headings
-- No descriptions
-- No notes
-
-FORMAT:
-
-FILE: src/fileName.js
-\`\`\`javascript
-CODE
-\`\`\`
 
 `;
 
@@ -96,64 +135,133 @@ CODE
 
           prompt: finalPrompt,
 
+          model:
+            "qwen2.5-coder:3b",
+
           onStream: (text) => {
+
             setResponse(text);
+
           },
 
         });
+
+      console.log(
+        "RAW AI RESPONSE:",
+        aiResponse
+      );
+
+      setResponse(aiResponse);
 
       const files =
         parseGeneratedFiles(
           aiResponse
         );
 
-      setGeneratedFiles(files);
+      console.log(
+        "PARSED FILES:",
+        files
+      );
 
-      if (files.length > 0) {
+      if (
+        !files ||
+        files.length === 0
+      ) {
 
-        setSelectedFile(files[0]);
+        setResponse(
+          aiResponse ||
+          "No files generated"
+        );
+
+        return;
       }
+
+      const savedFiles = [];
 
       for (const file of files) {
 
-        await saveGeneratedFile({
+        try {
 
-          project_name:
-            projectName,
+          const fileData = {
 
-          file_name:
-            file.fileName,
+            project_name:
+              projectName,
 
-          content:
-            file.code,
+            file_name:
+              file.fileName,
 
-        });
+            content:
+              file.code,
 
-        await saveWorkspaceDocument({
+          };
 
-          project_name:
-            projectName,
+          console.log(
+            "SAVING FILE:",
+            fileData
+          );
 
-          title:
-            file.fileName,
+          await saveGeneratedFile(
+            fileData
+          );
 
-          content:
-            file.code,
+          await saveWorkspaceDocument({
 
-        });
+            project_name:
+              projectName,
+
+            title:
+              file.fileName,
+
+            content:
+              file.code,
+
+          });
+
+          savedFiles.push({
+            ...file,
+          });
+
+        } catch (saveError) {
+
+          console.error(
+            "FILE SAVE ERROR:",
+            saveError
+          );
+        }
+      }
+
+      console.log(
+        "Saved Files:",
+        savedFiles
+      );
+
+      setGeneratedFiles(
+        savedFiles
+      );
+
+      if (
+        savedFiles.length > 0
+      ) {
+
+        setSelectedFile(
+          savedFiles[0]
+        );
       }
 
       const refreshed =
         await getGeneratedFiles();
 
       console.log(
-        "Saved Files:",
+        "DATABASE FILES:",
         refreshed
       );
 
     } catch (error) {
 
-      console.error(error);
+      console.error(
+        "CODE GENERATOR ERROR:",
+        error
+      );
 
       setResponse(
         "AI Generation Failed"
@@ -167,15 +275,35 @@ CODE
 
   return (
 
-    <div className="p-6 text-white">
+    <div
+      className="
+        p-6
+        text-white
+        bg-gray-950
+        min-h-screen
+      "
+    >
 
-      <h1 className="text-3xl font-bold mb-6">
+      <h1
+        className="
+          text-3xl
+          font-bold
+          mb-6
+        "
+      >
 
         AI Code Generator
 
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div
+        className="
+          grid
+          grid-cols-1
+          md:grid-cols-2
+          gap-4
+        "
+      >
 
         <input
           type="text"
@@ -210,11 +338,27 @@ CODE
             p-3
           "
         >
-          <option>React</option>
-          <option>Vue</option>
-          <option>Angular</option>
-          <option>Node.js</option>
-          <option>Express</option>
+
+          <option>
+            React
+          </option>
+
+          <option>
+            Vue
+          </option>
+
+          <option>
+            Angular
+          </option>
+
+          <option>
+            Node.js
+          </option>
+
+          <option>
+            Express
+          </option>
+
         </select>
 
         <select
@@ -232,9 +376,19 @@ CODE
             p-3
           "
         >
-          <option>JavaScript</option>
-          <option>TypeScript</option>
-          <option>Python</option>
+
+          <option>
+            JavaScript
+          </option>
+
+          <option>
+            TypeScript
+          </option>
+
+          <option>
+            Python
+          </option>
+
         </select>
 
       </div>
@@ -261,145 +415,114 @@ Describe your project requirements...
         "
       />
 
-      <button
-        onClick={generateCode}
-        disabled={loading}
+      <div
         className="
+          flex
+          gap-4
           mt-4
-          bg-blue-600
-          hover:bg-blue-700
-          px-6
-          py-3
-          rounded
-          font-bold
         "
       >
 
-        {loading
-          ? "Generating..."
-          : "Generate Code"}
+        <button
+          onClick={generateCode}
+          disabled={loading}
+          className="
+            bg-blue-600
+            hover:bg-blue-700
+            px-6
+            py-3
+            rounded
+            font-bold
+          "
+        >
 
-      </button>
+          {loading
+            ? "Generating..."
+            : "Generate Code"}
 
-      <button
+        </button>
+
+        <button
+          onClick={exportResponse}
+          className="
+            bg-green-600
+            hover:bg-green-700
+            px-6
+            py-3
+            rounded
+            font-bold
+          "
+        >
+
+          Export Full Response
+
+        </button>
+
+      </div>
+
+      <div
         className="
-          ml-4
-          mt-4
-          bg-green-600
-          hover:bg-green-700
-          px-6
-          py-3
-          rounded
-          font-bold
-        "
-      >
-
-        Export Full Response
-
-      </button>
-
-      <div className="mt-8">
-
-        <h2 className="
-          text-2xl
-          font-bold
-          mb-4
-        ">
-
-          Generated Files
-
-        </h2>
-
-        <div className="
+          mt-8
           grid
           grid-cols-1
           md:grid-cols-4
           gap-4
-        ">
+        "
+      >
 
-          <div className="
-            bg-gray-900
-            rounded
-            p-3
+        <div
+          className="
             h-[80vh]
-            overflow-auto
-          ">
+            rounded
+            overflow-hidden
+            border
+            border-gray-800
+          "
+        >
 
-            {generatedFiles.length === 0 && (
+          <FileTree
 
-              <div className="
-                text-gray-400
-              ">
+            files={generatedFiles}
 
-                No generated files
+            selectedFile={selectedFile}
 
-              </div>
-            )}
+            onSelect={(file) =>
+              setSelectedFile(file)
+            }
 
-            <div className="
-              space-y-2
-            ">
+          />
 
-              {generatedFiles.map(
-                (file, index) => (
+        </div>
 
-                <div
-                  key={index}
-                  onClick={() =>
-                    setSelectedFile(
-                      file
-                    )
-                  }
-                  className={`
-                    p-2
-                    rounded
-                    cursor-pointer
-                    transition
-                    ${
-                      selectedFile?.fileName ===
-                      file.fileName
-                        ? "bg-blue-700"
-                        : "bg-gray-800 hover:bg-gray-700"
-                    }
-                  `}
-                >
-
-                  {file.fileName}
-
-                </div>
-
-              ))}
-
-            </div>
-
-          </div>
-
-          <div className="
+        <div
+          className="
             md:col-span-3
             bg-gray-900
             rounded
             overflow-hidden
-          ">
+            h-[80vh]
+            border
+            border-gray-800
+          "
+        >
 
-            <CodeEditor
+          <CodeEditor
 
-              file={selectedFile}
+            file={selectedFile}
 
-              onChange={(value) => {
+            onChange={(value) => {
 
-                setSelectedFile({
+              setSelectedFile({
 
-                  ...selectedFile,
+                ...selectedFile,
 
-                  code: value,
+                code: value,
 
-                });
+              });
 
-              }}
+            }}
 
-            />
-
-          </div>
+          />
 
         </div>
 
@@ -407,24 +530,29 @@ Describe your project requirements...
 
       <div className="mt-8">
 
-        <h2 className="
-          text-2xl
-          font-bold
-          mb-4
-        ">
+        <h2
+          className="
+            text-2xl
+            font-bold
+            mb-4
+          "
+        >
 
           Full AI Response
 
         </h2>
 
-        <pre className="
-          bg-black
-          text-green-400
-          p-4
-          rounded
-          overflow-auto
-          whitespace-pre-wrap
-        ">
+        <pre
+          className="
+            bg-black
+            text-green-400
+            p-4
+            rounded
+            overflow-auto
+            whitespace-pre-wrap
+            max-h-[500px]
+          "
+        >
 
           {response}
 

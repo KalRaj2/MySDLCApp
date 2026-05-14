@@ -7,7 +7,9 @@ export async function initDB() {
   try {
 
     if (dbInstance) {
+
       return dbInstance;
+
     }
 
     dbInstance =
@@ -15,11 +17,16 @@ export async function initDB() {
         "sqlite:mysdlc.db"
       );
 
-    console.log("Database loaded");
+    console.log(
+      "Database loaded"
+    );
 
-    /* PROJECTS */
+    /*
+      PROJECTS TABLE
+    */
 
     await dbInstance.execute(`
+
       CREATE TABLE IF NOT EXISTS projects (
 
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -31,20 +38,24 @@ export async function initDB() {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 
       )
+
     `);
 
     console.log(
       "Projects table ready"
     );
 
-    /* DOCUMENTS */
+    /*
+      DOCUMENTS TABLE
+    */
 
     await dbInstance.execute(`
+
       CREATE TABLE IF NOT EXISTS documents (
 
         id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-        project_id INTEGER,
+        project_name TEXT,
 
         title TEXT,
 
@@ -55,20 +66,37 @@ export async function initDB() {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 
       )
+
     `);
 
     console.log(
       "Documents table ready"
     );
 
-    /* GENERATED FILES */
+    /*
+      REMOVE OLD generated_files TABLE
+      IMPORTANT:
+      OLD TABLE USED project_id
+      NEW TABLE USES project_name
+    */
 
     await dbInstance.execute(`
-      CREATE TABLE IF NOT EXISTS generated_files (
+
+      DROP TABLE IF EXISTS generated_files
+
+    `);
+
+    /*
+      GENERATED FILES TABLE
+    */
+
+    await dbInstance.execute(`
+
+      CREATE TABLE generated_files (
 
         id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-        project_id INTEGER,
+        project_name TEXT,
 
         file_name TEXT,
 
@@ -77,6 +105,7 @@ export async function initDB() {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 
       )
+
     `);
 
     console.log(
@@ -93,6 +122,7 @@ export async function initDB() {
     );
 
     throw error;
+
   }
 }
 
@@ -103,7 +133,9 @@ export function getDB() {
     throw new Error(
       "Database not initialized"
     );
+
   }
 
   return dbInstance;
+
 }

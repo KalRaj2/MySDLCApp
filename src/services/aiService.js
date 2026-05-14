@@ -1,10 +1,6 @@
 const OLLAMA_URL =
   "http://127.0.0.1:11434/api/generate";
 
-/* =========================================
-   MAIN AI GENERATOR
-========================================= */
-
 export async function generateAIResponse({
 
   prompt,
@@ -18,79 +14,61 @@ export async function generateAIResponse({
   try {
 
     const finalPrompt = `
-
 SYSTEM:
-You are a senior software engineer.
+You are an expert senior software engineer.
 
-You ONLY generate source code files.
+ABSOLUTE RULES:
 
-You NEVER explain anything.
+1. ONLY generate FILE blocks
+2. NO explanations
+3. NO markdown headings
+4. NO introductions
+5. NO summaries
+6. NO notes
+7. NO bullet points
+8. NO text outside FILE blocks
 
-You NEVER write introductions.
-
-You NEVER write markdown headings.
-
-You NEVER write bullet points.
-
-You NEVER write descriptions.
-
-You NEVER write notes.
-
-You NEVER write English explanations.
-
-OUTPUT FORMAT IS STRICTLY:
-
-FILE: src/fileName.js
-\`\`\`javascript
-FULL CODE HERE
-\`\`\`
-
-EXAMPLE:
+CORRECT FORMAT:
 
 FILE: src/components/Login.jsx
 \`\`\`jsx
-export default function Login() {
-  return <div>Login</div>
-}
+FULL CODE HERE
 \`\`\`
 
 FILE: src/services/authService.js
 \`\`\`javascript
-export async function login() {
-
-}
+FULL CODE HERE
 \`\`\`
 
 IMPORTANT:
-- ALWAYS generate COMPLETE FILES
-- ALWAYS generate REAL CODE
-- NEVER generate pseudo code
-- NEVER skip requested files
-- NEVER explain anything
-- NEVER say "Certainly"
-- NEVER say "Below is"
-- NEVER use markdown titles
+- Always generate REAL production-ready code
+- Always include imports
+- Always include exports
+- Never generate placeholder comments
+- Never explain code
+
+CRITICAL RULES:
+
+1. ONLY generate FILE blocks
+2. NEVER explain anything
+3. NEVER use comments for filenames
+4. NEVER write markdown headings
+5. NEVER write normal text
+6. ALWAYS use THIS EXACT FORMAT:
 
 USER REQUEST:
-
 ${prompt}
-
 `;
 
     const response =
       await fetch(
-
         OLLAMA_URL,
-
         {
-
           method: "POST",
 
           headers: {
-
             "Content-Type":
               "application/json",
-
           },
 
           body: JSON.stringify({
@@ -103,16 +81,28 @@ ${prompt}
 
             options: {
 
-              temperature: 0.2,
+              temperature: 0.1,
 
               num_predict: 4096,
 
             },
 
           }),
-
         }
       );
+
+    if (!response.ok) {
+
+      const errorText =
+        await response.text();
+
+      console.error(
+        "OLLAMA ERROR:",
+        errorText
+      );
+
+      throw new Error(errorText);
+    }
 
     if (!response.body) {
 
@@ -129,6 +119,8 @@ ${prompt}
 
     let fullResponse = "";
 
+    let buffer = "";
+
     while (true) {
 
       const {
@@ -138,15 +130,21 @@ ${prompt}
 
       if (done) break;
 
-      const chunk =
-        decoder.decode(value);
+      buffer += decoder.decode(
+        value,
+        {
+          stream: true,
+        }
+      );
 
       const lines =
-        chunk
-          .split("\n")
-          .filter(Boolean);
+        buffer.split("\n");
+
+      buffer = lines.pop() || "";
 
       for (const line of lines) {
+
+        if (!line.trim()) continue;
 
         try {
 
@@ -166,32 +164,71 @@ ${prompt}
             }
           }
 
-        } catch (err) {
+        } catch (error) {
 
           console.error(
-            "Parse Error:",
-            err
+            "STREAM JSON ERROR:",
+            error
           );
         }
       }
     }
+
+    if (buffer.trim()) {
+
+      try {
+
+        const parsed =
+          JSON.parse(buffer);
+
+        if (parsed.response) {
+
+          fullResponse +=
+            parsed.response;
+        }
+
+      } catch (error) {
+
+        console.error(
+          "FINAL BUFFER ERROR:",
+          error
+        );
+      }
+    }
+
+    /*
+      CLEAN BAD OUTPUTS
+    */
+
+    fullResponse =
+      fullResponse
+        .replace(
+          /Certainly!|Here('|’)s|Below is|Explanation:|Notes:/gi,
+          ""
+        )
+        .trim();
 
     return fullResponse;
 
   } catch (error) {
 
     console.error(
-      "AI Service Error:",
+      "AI SERVICE ERROR:",
       error
     );
 
-    throw error;
+    return `
+FILE: error.txt
+\`\`\`txt
+${error.message}
+\`\`\`
+`;
   }
 }
 
-/* =========================================
-   BACKWARD COMPATIBILITY
-========================================= */
+/*
+BACKWARD COMPATIBILITY
+*/
 
 export async function askOllama(
   prompt,
@@ -206,3 +243,11 @@ export async function askOllama(
 
   });
 }
+
+export default {
+
+  generateAIResponse,
+
+  askOllama,
+
+};

@@ -1,59 +1,105 @@
-import {
-  initDB,
-  getDB,
-} from "./db";
+import { getDB } from "./db";
 
-export async function saveGeneratedFile(
-  file
-) {
+export async function saveGeneratedFile({
+  project_name,
+  file_name,
+  content,
+}) {
+  try {
+    const db = await getDB();
 
-  await initDB();
-
-  const db = getDB();
-
-  await db.execute(
-
-    `
-    INSERT INTO generated_files
-    (
-      project_id,
-      file_name,
-      content
-    )
-
-    VALUES (?, ?, ?)
-    `,
-
-    [
-      file.project_id,
-      file.file_name,
-      file.content,
-    ]
-  );
-}
-
-export async function getGeneratedFiles(
-  projectId
-) {
-
-  await initDB();
-
-  const db = getDB();
-
-  const result =
-    await db.select(
-
+    await db.execute(
       `
-      SELECT *
-      FROM generated_files
-
-      WHERE project_id = ?
-
-      ORDER BY id DESC
+      INSERT INTO generated_files (
+        project_name,
+        file_name,
+        content
+      )
+      VALUES (?, ?, ?)
       `,
-
-      [projectId]
+      [
+        project_name,
+        file_name,
+        content,
+      ]
     );
 
-  return result;
+    console.log(
+      "FILE SAVED:",
+      file_name
+    );
+
+    return true;
+
+  } catch (error) {
+
+    console.error(
+      "SAVE FILE ERROR:",
+      error
+    );
+
+    return false;
+  }
+}
+
+export async function getGeneratedFiles() {
+
+  try {
+
+    const db = await getDB();
+
+    const result =
+      await db.select(
+        `
+        SELECT *
+        FROM generated_files
+        ORDER BY id DESC
+        `
+      );
+
+    console.log(
+      "DB FETCH:",
+      result
+    );
+
+    return result || [];
+
+  } catch (error) {
+
+    console.error(
+      "GET FILES ERROR:",
+      error
+    );
+
+    return [];
+  }
+}
+
+export async function deleteGeneratedFile(
+  id
+) {
+
+  try {
+
+    const db = await getDB();
+
+    await db.execute(
+      `
+      DELETE FROM generated_files
+      WHERE id = ?
+      `,
+      [id]
+    );
+
+    return true;
+
+  } catch (error) {
+
+    console.error(
+      "DELETE FILE ERROR:",
+      error
+    );
+
+    return false;
+  }
 }
