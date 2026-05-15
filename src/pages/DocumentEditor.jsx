@@ -12,9 +12,9 @@ import toast from "react-hot-toast";
 import {
   getDocumentById,
   updateWorkspaceDocument,
-} from "../services/workspaceService";
+} from "@services/db/workspaceService";
 
-import { streamOllama } from "../services/streamAI";
+import { streamOllama } from "@services/ai/streamAI";
 
 export default function DocumentEditor() {
   const { id } = useParams();

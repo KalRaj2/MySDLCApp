@@ -1,5 +1,4 @@
-import { initDB }
-from "../database/db";
+import { initDB } from "@services/db/db";
 
 export async function addRequirement(
   data

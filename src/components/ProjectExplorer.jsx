@@ -4,7 +4,7 @@ from "react";
 import {
   getProjects,
   getProjectFiles,
-} from "../services/projectService";
+} from "@services/db/projectService";
 
 export default function ProjectExplorer({
 

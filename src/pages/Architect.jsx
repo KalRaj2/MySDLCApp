@@ -7,19 +7,19 @@ from "react-hot-toast";
 
 import {
   architectureTemplates,
-} from "../services/architectureTemplates";
+} from "@services/templates/architectureTemplates";
 
 import {
   streamOllama,
-} from "../services/streamAI";
+} from "@services/ai/streamAI";
 
 import {
   saveWorkspaceDocument,
-} from "../services/workspaceService";
+} from "@services/db/workspaceService";
 
 import {
   getProjects,
-} from "../services/projectService";
+} from "@services/db/projectService";
 
 import {
   useEffect,

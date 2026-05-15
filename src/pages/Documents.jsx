@@ -6,23 +6,23 @@ import {
 import toast from "react-hot-toast";
 
 import { templates }
-from "../services/templateService";
+from "@/services/templates/templateService";
 
 import { streamOllama }
-from "../services/streamAI";
+from "@/services/ai/streamAI";
 
 import {
   exportMarkdown,
   exportText,
-} from "../services/exportService";
+} from "@/services/file/exportService";
 
 import {
   getProjects,
-} from "../services/projectService";
+} from "@/services/db/projectService";
 
 import {
   saveWorkspaceDocument,
-} from "../services/workspaceService";
+} from "@/services/db/workspaceService";
 
 export default function Documents() {
 

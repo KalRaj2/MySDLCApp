@@ -8,13 +8,13 @@ from "react-hot-toast";
 
 import {
   getProjects,
-} from "../services/projectService";
+} from "@services/db/projectService";
 
 import {
   createTask,
   getTasks,
   updateTaskStatus,
-} from "../services/agileService";
+} from "@services/agileService";
 
 const columns = [
   "Backlog",

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { getProjects } from "../services/projectService";
+import { getProjects } from "@services/db/projectService";
 
 export default function Dashboard() {
   const [projectCount, setProjectCount] = useState(0);

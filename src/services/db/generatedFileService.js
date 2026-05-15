@@ -1,55 +1,38 @@
 import {
   initDB,
   getDB,
-} from "./db";
+} from "@services/db/db";
 
 /*
   SAVE GENERATED FILE
 */
 
-export async function saveGeneratedFile({
-
-  project_name,
-
-  file_name,
-
-  content,
-
-}) {
-
+export async function saveGeneratedFile(file) {
   try {
-
-    await initDB();
-
-    const db = getDB();
+    const db = await initDB();
 
     await db.execute(
       `
-        INSERT INTO generated_files (
-
-          project_name,
-          file_name,
-          content,
-          created_at
-
-        )
-
-        VALUES (?, ?, ?, ?)
-      `,
-      [
-        project_name,
+      INSERT INTO generated_files (
+        project_id,
         file_name,
         content,
-        new Date().toISOString(),
+        language
+      )
+      VALUES (?, ?, ?, ?)
+      `,
+      [
+        file.project_id,
+        file.file_name,
+        file.content,
+        file.language || "javascript",
       ]
     );
 
     console.log(
       "FILE SAVED:",
-      file_name
+      file.file_name
     );
-
-    return true;
 
   } catch (error) {
 
@@ -58,7 +41,7 @@ export async function saveGeneratedFile({
       error
     );
 
-    return false;
+    throw error;
   }
 }
 

@@ -18,7 +18,7 @@ export async function saveWorkspaceDocument(
     `
     INSERT INTO documents
     (
-      project_id,
+      project_name,
       title,
       type,
       content
@@ -28,7 +28,7 @@ export async function saveWorkspaceDocument(
     `,
 
     [
-      document.project_id,
+      document.project_name,
       document.title,
       document.type,
       document.content,

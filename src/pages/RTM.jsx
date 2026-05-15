@@ -8,12 +8,12 @@ from "react-hot-toast";
 
 import {
   getProjects,
-} from "../services/projectService";
+} from "@services/db/projectService";
 
 import {
   addRequirement,
   getRequirements,
-} from "../services/rtmService";
+} from "@services/db/rtmService";
 
 export default function RTM() {
 

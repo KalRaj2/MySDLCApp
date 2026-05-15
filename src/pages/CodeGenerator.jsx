@@ -10,28 +10,28 @@ import {
 
 import {
   generateAIResponse,
-} from "../services/aiService";
+} from "@services/ai/aiService";
 
 import {
   parseGeneratedFiles,
-} from "../services/fileParser";
+} from "@services/file/fileParser";
 
 import {
   saveGeneratedFile,
   getGeneratedFiles,
-} from "../services/generatedFileService";
+} from "@services/db/generatedFileService";
 
 import {
   saveWorkspaceDocument,
-} from "../services/workspaceService";
+} from "@services/db/workspaceService";
 
-import CodeEditor from "../components/CodeEditor";
+import CodeEditor from "@components/CodeEditor";
 
-import FileTree from "../components/FileTree";
+import FileTree from "@components/FileTree";
 
-import WorkspaceTabs from "../components/WorkspaceTabs";
+import WorkspaceTabs from "@components/WorkspaceTabs";
 
-import ProjectExplorer from "../components/ProjectExplorer";
+import ProjectExplorer from "@components/ProjectExplorer";
 
 export default function CodeGenerator() {
 
@@ -337,8 +337,7 @@ ${prompt}
 
           const fileData = {
 
-            project_name:
-              projectName,
+            project_id: activeProject?.id || 1,
 
             file_name:
               file.fileName,
@@ -357,16 +356,11 @@ ${prompt}
           );
 
           await saveWorkspaceDocument({
-
-            project_name:
-              projectName,
-
-            title:
-              file.fileName,
-
-            content:
-              file.code,
-          });
+  project_id: activeProject?.id || 1,
+  title: file.fileName,
+  type: "code",
+  content: file.code,
+});
 
           savedFiles.push({
             ...file,

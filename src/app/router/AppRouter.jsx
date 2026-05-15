@@ -1,19 +1,20 @@
-import CodeGenerator from "../pages/CodeGenerator";
-import Architect from "../pages/Architect";
-import AgileBoard from "../pages/AgileBoard";
-import DocumentEditor from "../pages/DocumentEditor";
-import RTM from "../pages/RTM";
-import Documents from "../pages/Documents";
-import AIChat from "../pages/AIChat";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Workspace from "../pages/Workspace";
-import Dashboard from "../pages/Dashboard";
-import Projects from "../pages/Projects";
-import Discovery from "../pages/Discovery";
-import Settings from "../pages/Settings";
-import CreateProject from "../pages/CreateProject";
+import CodeGenerator from "@pages/CodeGenerator";
+import Architect from "@pages/Architect";
+import AgileBoard from "@pages/AgileBoard";
 
-import MainLayout from "../components/layout/MainLayout";
+import Dashboard from "@pages/Dashboard";
+import Projects from "@pages/Projects";
+import Discovery from "@pages/Discovery";
+import Settings from "@pages/Settings";
+import CreateProject from "@pages/CreateProject";
+import Documents from "@pages/Documents";
+import DocumentEditor from "@pages/DocumentEditor";
+import Workspace from "@pages/Workspace";
+import RTM from "@pages/RTM";
+import AIChat from "@pages/AIChat";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import MainLayout from "@components/layout/MainLayout";
 
 export default function AppRouter() {
   return (
