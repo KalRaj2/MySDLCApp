@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import {
   saveChat,
   getChatHistory,
-} from "../services/chatService";
+} from "@services/db/chatService";
 
-import { streamOllama } from "../services/streamAI";
+import { streamOllama } from "@services/ai/streamAI";
 
 export default function AIChat() {
   const [messages, setMessages] = useState([]);

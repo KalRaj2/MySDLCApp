@@ -1,7 +1,7 @@
 import {
   initDB,
   getDB,
-} from "./db";
+} from "@services/db/db";
 
 /*
   CREATE PROJECT

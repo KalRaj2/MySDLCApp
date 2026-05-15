@@ -1,7 +1,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-import { createProject } from "../services/projectService";
+import { createProject } from "@/services/db/projectService";
 
 export default function CreateProject() {
   const [projectName, setProjectName] = useState("");

@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import {
   getProjects,
   deleteProject,
-} from "../services/projectService";
+} from "@services/db/projectService";
 
 export default function Projects() {
   const [projects, setProjects] = useState([]);

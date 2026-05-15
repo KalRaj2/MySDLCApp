@@ -9,11 +9,11 @@ import {
 
 import {
   getProjects,
-} from "../services/projectService";
+} from "@services/db/projectService";
 
 import {
   getWorkspaceDocuments,
-} from "../services/workspaceService";
+} from "@services/db/workspaceService";
 
 export default function Workspace() {
 

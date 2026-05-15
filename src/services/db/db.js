@@ -1,113 +1,205 @@
 import Database from "@tauri-apps/plugin-sql";
 
-let dbInstance = null;
+let db = null;
+
+/*
+  INIT DATABASE
+*/
 
 export async function initDB() {
-
   try {
-
-    /*
-      PREVENT MULTIPLE INITIALIZATIONS
-    */
-
-    if (dbInstance) {
-
-      return dbInstance;
-
+    if (db) {
+      return db;
     }
 
-    /*
-      LOAD SQLITE DATABASE
-    */
-
-    dbInstance =
-      await Database.load(
-        "sqlite:mysdlc.db"
-      );
-
-    console.log(
-      "Database loaded"
+    db = await Database.load(
+      "sqlite:mysdlc.db"
     );
+
+    console.log("DB Connected");
 
     /*
       PROJECTS TABLE
     */
 
-    await dbInstance.execute(`
-
+    await db.execute(`
       CREATE TABLE IF NOT EXISTS projects (
-
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-        name TEXT,
-
+        name TEXT NOT NULL,
         description TEXT,
-
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-
+        framework TEXT,
+        language TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
-
     `);
 
-    console.log(
-      "Projects table ready"
-    );
+    console.log("Projects table ready");
 
     /*
       DOCUMENTS TABLE
     */
 
-    await dbInstance.execute(`
-
+    await db.execute(`
       CREATE TABLE IF NOT EXISTS documents (
-
         id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-        project_name TEXT,
+        project_id INTEGER NOT NULL,
 
-        title TEXT,
+        title TEXT NOT NULL,
 
         type TEXT,
 
         content TEXT,
 
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        version INTEGER DEFAULT 1,
 
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY(project_id)
+        REFERENCES projects(id)
+        ON DELETE CASCADE
       )
-
     `);
 
-    console.log(
-      "Documents table ready"
-    );
+    console.log("Documents table ready");
 
     /*
       GENERATED FILES TABLE
     */
 
-    await dbInstance.execute(`
-
+    await db.execute(`
       CREATE TABLE IF NOT EXISTS generated_files (
-
         id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-        project_name TEXT,
+        project_id INTEGER NOT NULL,
 
-        file_name TEXT,
+        file_name TEXT NOT NULL,
 
         content TEXT,
 
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        language TEXT,
 
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY(project_id)
+        REFERENCES projects(id)
+        ON DELETE CASCADE
       )
-
     `);
 
-    console.log(
-      "Generated files table ready"
-    );
+    console.log("Generated files table ready");
 
-    return dbInstance;
+    /*
+      CHAT HISTORY TABLE
+    */
+
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS chat_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        project_id INTEGER,
+
+        role TEXT,
+
+        message TEXT,
+
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY(project_id)
+        REFERENCES projects(id)
+        ON DELETE CASCADE
+      )
+    `);
+
+    console.log("Chat history table ready");
+
+    /*
+      RTM MATRIX TABLE
+    */
+
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS rtm_matrix (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        project_id INTEGER,
+
+        requirement_id TEXT,
+
+        requirement TEXT,
+
+        linked_testcase TEXT,
+
+        linked_file TEXT,
+
+        status TEXT,
+
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY(project_id)
+        REFERENCES projects(id)
+        ON DELETE CASCADE
+      )
+    `);
+
+    console.log("RTM table ready");
+
+    /*
+      DISCOVERY ANSWERS TABLE
+    */
+
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS discovery_answers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        project_id INTEGER,
+
+        question TEXT,
+
+        answer TEXT,
+
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY(project_id)
+        REFERENCES projects(id)
+        ON DELETE CASCADE
+      )
+    `);
+
+    console.log("Discovery table ready");
+
+    /*
+      AGILE SPRINTS TABLE
+    */
+
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS agile_sprints (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        project_id INTEGER,
+
+        sprint_name TEXT,
+
+        goal TEXT,
+
+        tasks TEXT,
+
+        status TEXT,
+
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY(project_id)
+        REFERENCES projects(id)
+        ON DELETE CASCADE
+      )
+    `);
+
+    console.log("Agile table ready");
+
+    return db;
 
   } catch (error) {
 
@@ -117,20 +209,21 @@ export async function initDB() {
     );
 
     throw error;
-
   }
 }
 
+/*
+  GET DB
+*/
+
 export function getDB() {
 
-  if (!dbInstance) {
+  if (!db) {
 
     throw new Error(
       "Database not initialized"
     );
-
   }
 
-  return dbInstance;
-
+  return db;
 }

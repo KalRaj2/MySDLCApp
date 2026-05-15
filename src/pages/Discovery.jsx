@@ -1,9 +1,9 @@
-import { askOllama } from "../services/aiService";
+import { askOllama } from "@/services/ai/aiService";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-import { analyzeRequirements } from "../services/aiAnalyzer";
-import { saveDiscoverySession } from "../services/discoveryService";
+import { analyzeRequirements } from "@services/ai/aiAnalyzer";
+import { saveDiscoverySession } from "@/services/db/discoveryService";
 
 export default function Discovery() {
   const [formData, setFormData] = useState({

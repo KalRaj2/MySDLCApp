@@ -1,253 +1,145 @@
-const OLLAMA_URL =
-  "http://127.0.0.1:11434/api/generate";
+const OLLAMA_URL = "http://127.0.0.1:11434/api/generate";
 
+/*
+  AI CODE GENERATION ENGINE
+*/
 export async function generateAIResponse({
-
   prompt,
-
   model = "qwen2.5-coder:3b",
-
   onStream,
-
 }) {
-
   try {
-
     const finalPrompt = `
-SYSTEM:
-You are an expert senior software engineer.
+You are a senior software engineer AI system.
 
-ABSOLUTE RULES:
+STRICT OUTPUT RULES:
+- ONLY output FILE blocks
+- NO explanations
+- NO SYSTEM messages
+- NO markdown outside FILE blocks
+- NO extra text
 
-1. ONLY generate FILE blocks
-2. NO explanations
-3. NO markdown headings
-4. NO introductions
-5. NO summaries
-6. NO notes
-7. NO bullet points
-8. NO text outside FILE blocks
+FORMAT STRICTLY LIKE THIS:
 
-CORRECT FORMAT:
-
-FILE: src/components/Login.jsx
+FILE: src/App.jsx
 \`\`\`jsx
-FULL CODE HERE
+code here
 \`\`\`
 
-FILE: src/services/authService.js
+FILE: src/services/api.js
 \`\`\`javascript
-FULL CODE HERE
+code here
 \`\`\`
-
-IMPORTANT:
-- Always generate REAL production-ready code
-- Always include imports
-- Always include exports
-- Never generate placeholder comments
-- Never explain code
-
-CRITICAL RULES:
-
-1. ONLY generate FILE blocks
-2. NEVER explain anything
-3. NEVER use comments for filenames
-4. NEVER write markdown headings
-5. NEVER write normal text
-6. ALWAYS use THIS EXACT FORMAT:
 
 USER REQUEST:
 ${prompt}
 `;
 
-    const response =
-      await fetch(
-        OLLAMA_URL,
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-
-          body: JSON.stringify({
-
-            model,
-
-            prompt: finalPrompt,
-
-            stream: true,
-
-            options: {
-
-              temperature: 0.1,
-
-              num_predict: 4096,
-
-            },
-
-          }),
-        }
-      );
+    const response = await fetch(OLLAMA_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        prompt: finalPrompt,
+        stream: true,
+        options: {
+          temperature: 0.2,
+          num_predict: 4096,
+        },
+      }),
+    });
 
     if (!response.ok) {
-
-      const errorText =
-        await response.text();
-
-      console.error(
-        "OLLAMA ERROR:",
-        errorText
-      );
-
+      const errorText = await response.text();
       throw new Error(errorText);
     }
 
-    if (!response.body) {
-
-      throw new Error(
-        "No response body"
-      );
-    }
-
-    const reader =
-      response.body.getReader();
-
-    const decoder =
-      new TextDecoder();
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
 
     let fullResponse = "";
-
     let buffer = "";
 
     while (true) {
-
-      const {
-        done,
-        value,
-      } = await reader.read();
-
+      const { done, value } = await reader.read();
       if (done) break;
 
-      buffer += decoder.decode(
-        value,
-        {
-          stream: true,
-        }
-      );
+      buffer += decoder.decode(value, { stream: true });
 
-      const lines =
-        buffer.split("\n");
-
+      const lines = buffer.split("\n");
       buffer = lines.pop() || "";
 
       for (const line of lines) {
-
         if (!line.trim()) continue;
 
         try {
-
-          const parsed =
-            JSON.parse(line);
+          const parsed = JSON.parse(line);
 
           if (parsed.response) {
+            const chunk = parsed.response;
 
-            fullResponse +=
-              parsed.response;
+            // 🚨 FILTER SYSTEM NOISE
+            if (
+              chunk.includes("SYSTEM:") ||
+              chunk.includes("assistant:") ||
+              chunk.includes("user:")
+            ) {
+              continue;
+            }
+
+            fullResponse += chunk;
 
             if (onStream) {
-
-              onStream(
-                fullResponse
-              );
+              onStream(fullResponse); // full progressive text
             }
           }
-
-        } catch (error) {
-
-          console.error(
-            "STREAM JSON ERROR:",
-            error
-          );
+        } catch (err) {
+          console.error("STREAM PARSE ERROR:", err);
         }
       }
     }
 
+    // flush buffer
     if (buffer.trim()) {
-
       try {
-
-        const parsed =
-          JSON.parse(buffer);
-
+        const parsed = JSON.parse(buffer);
         if (parsed.response) {
-
-          fullResponse +=
-            parsed.response;
+          fullResponse += parsed.response;
         }
-
-      } catch (error) {
-
-        console.error(
-          "FINAL BUFFER ERROR:",
-          error
-        );
+      } catch (err) {
+        console.error("FINAL BUFFER ERROR:", err);
       }
     }
 
-    /*
-      CLEAN BAD OUTPUTS
-    */
-
-    fullResponse =
-      fullResponse
-        .replace(
-          /Certainly!|Here('|’)s|Below is|Explanation:|Notes:/gi,
-          ""
-        )
-        .trim();
+    // cleanup AI junk text
+    fullResponse = fullResponse
+      .replace(/Certainly!|Here('|’)s|Below is|Explanation:|Notes:/gi, "")
+      .trim();
 
     return fullResponse;
-
   } catch (error) {
+    console.error("AI SERVICE ERROR:", error);
 
-    console.error(
-      "AI SERVICE ERROR:",
-      error
-    );
-
-    return `
-FILE: error.txt
+    return `FILE: src/error/error.txt
 \`\`\`txt
 ${error.message}
-\`\`\`
-`;
+\`\`\``;
   }
 }
 
 /*
-BACKWARD COMPATIBILITY
+  BACKWARD COMPATIBILITY
 */
-
-export async function askOllama(
-  prompt,
-  onStream
-) {
-
+export async function askOllama(prompt, onStream) {
   return await generateAIResponse({
-
     prompt,
-
     onStream,
-
   });
 }
 
 export default {
-
   generateAIResponse,
-
   askOllama,
-
 };
