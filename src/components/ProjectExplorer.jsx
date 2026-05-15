@@ -8,7 +8,7 @@ import {
 
 export default function ProjectExplorer({
 
-  onFileSelect,
+  onSelectProject,
 
 }) {
 
