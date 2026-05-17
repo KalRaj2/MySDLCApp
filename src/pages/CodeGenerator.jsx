@@ -516,8 +516,8 @@ ${prompt}
     <div
       className="
         p-6
-        text-white
-        bg-gray-950
+        text-black
+        bg-white
         min-h-screen
       "
     >
@@ -553,9 +553,9 @@ ${prompt}
             )
           }
           className="
-            bg-gray-800
+            bg-white
             border
-            border-gray-700
+            border-gray-300
             rounded
             p-3
           "
@@ -569,9 +569,9 @@ ${prompt}
             )
           }
           className="
-            bg-gray-800
+            bg-white
             border
-            border-gray-700
+            border-gray-300
             rounded
             p-3
           "
@@ -593,9 +593,9 @@ ${prompt}
             )
           }
           className="
-            bg-gray-800
+            bg-white
             border
-            border-gray-700
+            border-gray-300
             rounded
             p-3
           "
@@ -623,9 +623,9 @@ Describe your project requirements...
         className="
           w-full
           mt-4
-          bg-gray-800
+          bg-white
           border
-          border-gray-700
+          border-gray-300
           rounded
           p-4
         "
@@ -705,10 +705,10 @@ Describe your project requirements...
         <div
           className="
             col-span-2
-            bg-gray-900
+            bg-white
             rounded
             border
-            border-gray-800
+            border-gray-200
             overflow-hidden
           "
         >
@@ -724,10 +724,10 @@ Describe your project requirements...
         <div
           className="
             col-span-2
-            bg-gray-900
+            bg-white
             rounded
             border
-            border-gray-800
+            border-gray-200
             overflow-hidden
           "
         >
@@ -745,10 +745,10 @@ Describe your project requirements...
             col-span-8
             flex
             flex-col
-            bg-gray-900
+            bg-white
             rounded
             border
-            border-gray-800
+            border-gray-200
             overflow-hidden
           "
         >
@@ -815,8 +815,8 @@ Describe your project requirements...
 
         <pre
           className="
-            bg-black
-            text-green-400
+            bg-gray-100
+            text-black
             p-4
             rounded
             overflow-auto

@@ -84,7 +84,7 @@ function TreeNode({
           px-2
           py-1
           cursor-pointer
-          hover:bg-gray-800
+          hover:bg-blue-50
           text-sm
         "
         style={{
@@ -115,7 +115,7 @@ function TreeNode({
           px-2
           py-1
           cursor-pointer
-          hover:bg-gray-800
+          hover:bg-blue-50
           font-semibold
           text-sm
         "
@@ -179,7 +179,7 @@ export default function FileTree({
 
     <div
       className="
-        bg-gray-900
+        bg-white
         text-white
         h-full
         overflow-auto
@@ -190,7 +190,7 @@ export default function FileTree({
         className="
           p-3
           border-b
-          border-gray-800
+          border-gray-200
           font-bold
         "
       >

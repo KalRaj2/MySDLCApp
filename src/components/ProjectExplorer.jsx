@@ -8,7 +8,7 @@ import {
 
 export default function ProjectExplorer({
 
-  onSelectProject,
+  onFileSelect,
 
 }) {
 
@@ -68,10 +68,6 @@ export default function ProjectExplorer({
       projectName
     );
 
-    /*
-      LOAD FILES
-    */
-
     if (
       !projectFiles[projectName]
     ) {
@@ -105,8 +101,8 @@ export default function ProjectExplorer({
 
     <div
       className="
-        bg-gray-950
-        text-white
+        bg-white
+        text-black
         h-full
         overflow-auto
         p-2
@@ -120,9 +116,7 @@ export default function ProjectExplorer({
           mb-4
         "
       >
-
         Projects
-
       </h2>
 
       {projects.map((project) => (
@@ -140,10 +134,12 @@ export default function ProjectExplorer({
             }
             className="
               cursor-pointer
-              bg-gray-900
-              hover:bg-gray-800
+              bg-blue-50
+              hover:bg-blue-100
               p-2
               rounded
+              border
+              border-blue-100
             "
           >
 
@@ -181,7 +177,7 @@ export default function ProjectExplorer({
                     }
                     className="
                       cursor-pointer
-                      hover:text-blue-400
+                      hover:text-blue-600
                       py-1
                     "
                   >

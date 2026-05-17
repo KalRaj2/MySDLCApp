@@ -8,9 +8,12 @@ import {
 import { streamOllama } from "@services/ai/streamAI";
 
 export default function AIChat() {
-  const [messages, setMessages] = useState([]);
 
-  const [input, setInput] = useState("");
+  const [messages, setMessages] =
+    useState([]);
+
+  const [input, setInput] =
+    useState("");
 
   const [loading, setLoading] =
     useState(false);
@@ -20,12 +23,15 @@ export default function AIChat() {
   }, []);
 
   const loadHistory = async () => {
-    const history = await getChatHistory();
+
+    const history =
+      await getChatHistory();
 
     setMessages(history);
   };
 
   const sendMessage = async () => {
+
     if (!input.trim()) return;
 
     const userMessage = {
@@ -64,7 +70,9 @@ User:
 ${input}
 `,
       (chunk) => {
+
         setMessages((prev) => {
+
           const updated = [...prev];
 
           updated[
@@ -76,44 +84,73 @@ ${input}
       }
     );
 
-    await saveChat("assistant", aiText);
+    await saveChat(
+      "assistant",
+      aiText
+    );
 
     setLoading(false);
   };
 
   return (
-    <div className="flex flex-col h-[85vh]">
 
-      <h1 className="text-3xl font-bold mb-4">
+    <div className="flex flex-col h-[85vh] text-black">
+
+      <h1 className="text-3xl font-bold mb-4 text-black">
         AI SDLC Assistant
       </h1>
 
-      <div className="flex-1 bg-slate-900 rounded-xl p-4 overflow-auto">
+      <div
+        className="
+          flex-1
+          bg-white
+          border
+          border-gray-200
+          rounded-xl
+          p-4
+          overflow-auto
+        "
+      >
 
         <div className="flex flex-col gap-4">
 
           {messages.map((msg, index) => (
+
             <div
               key={index}
-              className={`p-4 rounded-xl max-w-[80%]
-              ${
-                msg.role === "user"
-                  ? "bg-blue-600 self-end"
-                  : "bg-slate-700 self-start"
-              }`}
+              className={`
+                p-4
+                rounded-xl
+                max-w-[80%]
+                shadow-sm
+
+                ${
+                  msg.role === "user"
+                    ? "bg-blue-600 text-white self-end"
+                    : "bg-gray-100 text-black self-start"
+                }
+              `}
             >
-              <div className="text-sm text-gray-300 mb-1">
+
+              <div
+                className="
+                  text-xs
+                  mb-1
+                  opacity-70
+                "
+              >
                 {msg.role}
               </div>
 
               <div className="whitespace-pre-wrap">
                 {msg.message}
               </div>
+
             </div>
           ))}
 
           {loading && (
-            <div className="text-gray-400">
+            <div className="text-gray-500">
               AI thinking...
             </div>
           )}
@@ -131,17 +168,33 @@ ${input}
             setInput(e.target.value)
           }
           placeholder="Ask SDLC AI..."
-          className="flex-1 p-4 rounded-xl bg-slate-800 outline-none"
+          className="
+            flex-1
+            p-4
+            rounded-xl
+            border
+            border-gray-300
+            bg-white
+            text-black
+          "
         />
 
         <button
           onClick={sendMessage}
-          className="bg-blue-600 px-6 rounded-xl"
+          className="
+            bg-blue-600
+            hover:bg-blue-700
+            text-white
+            px-6
+            rounded-xl
+            font-semibold
+          "
         >
           Send
         </button>
 
       </div>
+
     </div>
   );
 }

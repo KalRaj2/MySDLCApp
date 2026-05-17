@@ -11,7 +11,7 @@ export default function CodeEditor({
 
     return (
 
-      <div className="p-4 text-gray-400">
+      <div className="p-4 text-gray-600">
 
         Select a file
 
@@ -25,7 +25,7 @@ export default function CodeEditor({
 
       <Editor
         height="80vh"
-        theme="vs-dark"
+        theme="light"
         language={getLanguage(
           file.fileName
         )}

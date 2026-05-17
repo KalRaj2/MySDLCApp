@@ -15,7 +15,7 @@ export default function WorkspaceTabs({
     <div
       className="
         flex
-        bg-gray-900
+        bg-white
         border-b
         border-gray-800
         overflow-x-auto
@@ -41,7 +41,7 @@ export default function WorkspaceTabs({
               activeFile?.fileName ===
               file.fileName
                 ? "bg-gray-800 text-white"
-                : "bg-gray-900 text-gray-400"
+                : "bg-gray-900 text-gray-600"
             }
           `}
           onClick={() =>
@@ -68,8 +68,8 @@ export default function WorkspaceTabs({
 
             }}
             className="
-              text-red-400
-              hover:text-red-300
+              text-red-500
+              hover:text-red-700
             "
           >
 
