@@ -3,141 +3,99 @@ import {
   getDB,
 } from "./db";
 
-/* SAVE DOCUMENT */
-
-export async function saveWorkspaceDocument(
-  document
-) {
-
+export async function saveWorkspaceDocument(document) {
   await initDB();
 
   const db = getDB();
 
   await db.execute(
-
     `
-    INSERT INTO documents
-    (
-      project_name,
-      title,
-      type,
-      content
-    )
+      INSERT INTO documents (
+        project_id,
+        title,
+        type,
+        content,
+        created_at,
+        updated_at
+      )
 
-    VALUES (?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?)
     `,
-
     [
-      document.project_name,
+      document.project_id,
       document.title,
       document.type,
       document.content,
+      new Date().toISOString(),
+      new Date().toISOString(),
     ]
   );
 }
 
-/* GET PROJECT DOCUMENTS */
-
-export async function getWorkspaceDocuments(
-  projectId
-) {
-
+export async function getWorkspaceDocuments(projectId) {
   await initDB();
 
   const db = getDB();
 
-  const result =
-    await db.select(
-
-      `
+  return await db.select(
+    `
       SELECT *
       FROM documents
-
       WHERE project_id = ?
-
       ORDER BY id DESC
-      `,
-
-      [projectId]
-    );
-
-  return result;
+    `,
+    [projectId]
+  );
 }
 
-/* DELETE DOCUMENT */
-
-export async function deleteWorkspaceDocument(
-  id
-) {
-
+export async function deleteWorkspaceDocument(id) {
   await initDB();
 
   const db = getDB();
 
   await db.execute(
-
     `
-    DELETE FROM documents
-    WHERE id = ?
+      DELETE FROM documents
+      WHERE id = ?
     `,
-
     [id]
   );
 }
 
-/* UPDATE DOCUMENT */
-
-export async function updateWorkspaceDocument(
-  document
-) {
-
+export async function updateWorkspaceDocument(id, content) {
   await initDB();
 
   const db = getDB();
 
   await db.execute(
-
     `
-    UPDATE documents
-
-    SET
-      title = ?,
-      type = ?,
-      content = ?
-
-    WHERE id = ?
+      UPDATE documents
+      SET
+        content = ?,
+        updated_at = ?
+      WHERE id = ?
     `,
-
     [
-      document.title,
-      document.type,
-      document.content,
-      document.id,
+      content,
+      new Date().toISOString(),
+      id,
     ]
   );
 }
-/* GET SINGLE DOCUMENT */
 
-export async function getDocumentById(
-  id
-) {
-
+export async function getDocumentById(id) {
   await initDB();
 
   const db = getDB();
 
-  const result =
-    await db.select(
-
-      `
+  const result = await db.select(
+    `
       SELECT *
       FROM documents
-
       WHERE id = ?
-      `,
+    `,
+    [id]
+  );
 
-      [id]
-    );
-
-  return result[0];
+  return result[0] || null;
 }
